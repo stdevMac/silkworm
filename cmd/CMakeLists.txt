@@ -106,6 +106,9 @@ if(NOT SILKWORM_CORE_ONLY)
   add_executable(trie trie.cpp)
   target_link_libraries(trie PRIVATE silkworm_node CLI11::CLI11)
 
+  add_executable(buffer buffer.cpp)
+  target_link_libraries(buffer PRIVATE silkworm_node CLI11::CLI11)
+
   add_executable(download_headers download_headers.cpp)
   target_link_libraries(download_headers PRIVATE silkworm_node silkworm_core CLI11::CLI11)
   target_include_directories(download_headers PRIVATE ${CMAKE_SOURCE_DIR})

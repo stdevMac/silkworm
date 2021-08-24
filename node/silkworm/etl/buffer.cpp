@@ -46,4 +46,34 @@ void Buffer::clear() noexcept {
 
 bool Buffer::overflows() const noexcept { return size_ >= optimal_size_; }
 
+
+
+
+
+
+void Buffer2::put(const Entry& entry) {
+    size_ += entry.size();
+    buffer_.push_back(entry);
+}
+
+void Buffer2::sort() { std::sort(buffer_.begin(), buffer_.end()); }
+
+size_t Buffer2::size() const noexcept { return size_; }
+
+gsl::span<const Entry> Buffer2::entries() const noexcept { return {buffer_.data(), buffer_.size()}; }
+
+void Buffer2::clear() noexcept {
+    buffer_.resize(0);
+    size_ = 0;
+}
+
+bool Buffer2::overflows() const noexcept { return size_ >= optimal_size_; }
+
+
+
+
+
+
+
+
 }  // namespace silkworm::etl

@@ -29,7 +29,7 @@ namespace silkworm::etl {
 
 constexpr size_t kInitialBufferCapacity = 32768;
 
-// In ETL, a buffer must be used stores entries, sort them and write them to file
+// In ETL, a buffer must be used to store entries, sort them and write them to file
 class Buffer {
   public:
     // Not copyable nor movable
@@ -40,7 +40,7 @@ class Buffer {
 
     void put(const Entry& entry);     // Add a new entry to the buffer
     void clear() noexcept;            // Set the buffer to contain 0 entries
-    bool overflows() const noexcept;  // Whether or not accounted size overflows optimal_size_ (i.e. time to flush)
+    bool overflows() const noexcept;  // Whether accounted size overflows optimal_size_ (i.e. time to flush)
     void sort();                      // Sort buffer in increasing order by key comparison
     size_t size() const noexcept;     // Actual size of accounted data
     gsl::span<const Entry> entries() const noexcept;
@@ -50,6 +50,28 @@ class Buffer {
     size_t size_ = 0;
 
     size_t length_ = 0;          // number of entries
+    std::vector<Entry> buffer_;  // buffer for holding entries
+};
+
+class Buffer2 {
+  public:
+    // Not copyable nor movable
+    Buffer2(const Buffer2&) = delete;
+    Buffer2& operator=(const Buffer2&) = delete;
+
+    explicit Buffer2(size_t optimal_size) : optimal_size_(optimal_size) {}
+
+    void put(const Entry& entry);     // Add a new entry to the buffer
+    void clear() noexcept;            // Set the buffer to contain 0 entries
+    bool overflows() const noexcept;  // Whether accounted size overflows optimal_size_ (i.e. time to flush)
+    void sort();                      // Sort buffer in increasing order by key comparison
+    size_t size() const noexcept;     // Actual size of accounted data
+    gsl::span<const Entry> entries() const noexcept;
+
+  private:
+    size_t optimal_size_;
+    size_t size_ = 0;
+
     std::vector<Entry> buffer_;  // buffer for holding entries
 };
 
