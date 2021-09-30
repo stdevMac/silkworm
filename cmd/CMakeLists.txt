@@ -64,6 +64,9 @@ if(NOT SILKWORM_CORE_ONLY)
   add_executable(execute execute.cpp)
   target_link_libraries(execute PRIVATE silkworm_node CLI11::CLI11)
 
+  add_executable(witness witness.cpp)
+  target_link_libraries(witness PRIVATE silkworm_node CLI11::CLI11)
+
   add_executable(unwind_execution unwind_execution.cpp)
   target_link_libraries(unwind_execution PRIVATE silkworm_node CLI11::CLI11)
 
