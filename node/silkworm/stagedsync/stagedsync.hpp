@@ -51,6 +51,7 @@ StageResult stage_execution  (TransactionManager& txn, const std::filesystem::pa
 inline StageResult stage_execution(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0) {
     return stage_execution(txn, etl_path, kDefaultBatchSize, prune_from);
 }
+StageResult insert_blocks  (mdbx::txn& txn, const std::vector<std::string>& blocks_rlp);
 
 /* HashState Promotion Functions*/
 
