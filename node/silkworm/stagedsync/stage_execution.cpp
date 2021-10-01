@@ -31,6 +31,57 @@
 
 namespace silkworm::stagedsync {
 
+StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks_rlp) {
+    for (auto& block_rlp : blocks_rlp) {
+        Bytes rlp_bytes{*from_hex(block_rlp)};
+        ByteView in{rlp_bytes};
+        Block block{};
+        Bytes rlp{};
+        if (rlp::decode(in, block) != rlp::DecodingResult::kOk) return StageResult::kDecodingError;
+        rlp::encode(rlp, block.header);
+        auto key{db::block_key(block.header.number, block.header.hash().bytes)};
+        txn.insert(db::open_map(txn, db::table::kHeaders), mdbx::slice(key), mdbx::slice(rlp));
+    }
+    return StageResult::kSuccess;
+}
+//
+// static StageResult execute_block(mdbx::txn& txn, Block& block, const ChainConfig& config,
+//                                 const db::StorageMode& storage_mode, uint64_t& block_num,
+//                                 uint64_t prune_from) {
+//    db::Buffer buffer{txn, prune_from};
+//    AnalysisCache analysis_cache;
+//    ExecutionStatePool state_pool;
+//    std::vector<Receipt> receipts;
+//
+//    auto consensus_engine{consensus::engine_factory(config)};
+//    if (!consensus_engine) {
+//        return StageResult::kUnknownConsensusEngine;
+//    }
+//
+//    std::optional<BlockWithHash> bh;
+//
+//    bh->block = block;
+//    bh->hash = block.header.hash();
+//
+//    ExecutionProcessor processor{bh->block, *consensus_engine, buffer, config};
+//    processor.evm().advanced_analysis_cache = &analysis_cache;
+//    processor.evm().state_pool = &state_pool;
+//
+//    if (const auto res{processor.execute_and_write_block(receipts)}; res != ValidationResult::kOk) {
+//        SILKWORM_LOG(LogLevel::Error) << "Validation error " << magic_enum::enum_name<ValidationResult>(res)
+//                                      << " at block " << block_num << std::endl;
+//        return StageResult::kInvalidBlock;
+//    }
+//
+//    if (storage_mode.Receipts && block_num >= prune_from) {
+//        buffer.insert_receipts(block_num, receipts);
+//    }
+//
+//    SILKWORM_LOG(LogLevel::Debug) << "Blocks <= " << block_num << " executed" << std::endl;
+//    buffer.write_to_db();
+//    return StageResult::kSuccess;
+//}
+
 // block_num is input-output
 static StageResult execute_batch_of_blocks(mdbx::txn& txn, const ChainConfig& config, const uint64_t max_block,
                                            const db::StorageMode& storage_mode, const size_t batch_size,
