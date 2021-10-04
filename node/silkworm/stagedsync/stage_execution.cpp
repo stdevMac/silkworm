@@ -17,6 +17,8 @@
 #include <filesystem>
 #include <string>
 
+#include <core/silkworm/state/OverlayState.h>
+
 #include <silkworm/chain/config.hpp>
 #include <silkworm/common/endian.hpp>
 #include <silkworm/common/log.hpp>
@@ -212,14 +214,8 @@ void insert_witness(mdbx::txn& txn, db::OverlayDB& odb) {
     insert_on_overlay_db(odb);
 }
 
-bytesConstRef getBytesConstRefFromHex(std::string const& _s) {
-    auto fHex = silkworm::db::fromHex(_s);
-    return silkworm::db::getBytesConstRef(fHex);
-}
-
-
 void insert_on_overlay_db(db::OverlayDB& odb) {
-    auto valueBytes = getBytesConstRefFromHex(
+    auto valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0022dc658c54335e88a66f7366bf842eb4c55f7e24da8c80c08d370ef98fb8e00a07c806b5cc362296990599673685cdf3a2b5a"
         "80c7a67e4301ab1eb135f1f1ad52a0f29bef756e86fb26542808b8950c0899355a20bd6d951f38853dcdbe53b63588a00b8303ac672bc3"
         "f1028ada52e9582108535d0ad766ffa0e969b496428f900f44a0c4423b2e0efd9464cbd84ecb87c57298dc616e08d01ece2ccc745b148a"
@@ -231,7 +227,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "9874e560b06be8e6e10d7b1f64bac73a82156caa967a5aaaf9a01b9500e133646edc6ead52ba92c6bc4c096f2a876db646d5d0ca1237d9"
         "9ab736a0452a655c6f5da7488ab53f9d13de5cca30150ef2ee2e3ea9294d6fa564db62b280");
     odb.insert(h256{"0xf1da69409a52822fb0e3f78c0ea402181abdb603d840703e4bf8c12370ec6643"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0f783de3bc9b4b457f8d0a3d258a34063dcaf2f67bfa57d6cdd3b2655e9271a9da0307710d65e30277fe37d52206ceea5b9706a"
         "f07fe5bd773fb7e8739eb9816e39a000dce9dd749a8219d3d3735a53a9cc76f6b0c16e332056fa92c9a57293da4c36a005edc1fe3922fd"
         "1ed265f0f102500c4352435b2d144ad27831498687b16a9ae6a0f19c4a4bf18b498052d073ae602cb2145abdc76f5706d05353359e0700"
@@ -243,7 +239,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "178914cf0e16b8331cc19e0bd76a381a24c1486b7e306b1f89a0dfa8c08348d60eccb4e46a32dc1ff337f0ed5da51b5a1bc828d72216d2"
         "789043a071766127b0819b61f134e986bb8f9687d681f2c267bc7f9f6ad21baa41b9e4ae80");
     odb.insert(silkworm::db::h256{"0xc4423b2e0efd9464cbd84ecb87c57298dc616e08d01ece2ccc745b148add51eb"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0108a76dfd9e129e5b1210827e939d597f5e04f5be44a1a048351c8325b06a89fa01d653c8b65589804739c7f2be2b388e06a9d"
         "4bcd3b41f3592a9b2f9c3eda058ba00949f379530d50463ee6f68f240543bc98a6f51a8e879056b63f0ad1f5269f15a015b1f930765dde"
         "3b34209fb2b42cb6523cb1ff36c57342a50c2b70a4e2161e76a0c9f42eae038555cd65566aefa066d65fb75332a7271bfa6ac20b0b32f1"
@@ -255,22 +251,22 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "d68de48597b410c709d9ec4d6b3a309f72b0f149874c604fd2a093e0000a17d5eef8c7449934e76801bb90f75d2fad0b615498b3435e26"
         "dc6e95a070ebdd328801b0de3ce3b8fa1b99b3b8fa59b1cfcca948a24a78a7584be69d7880");
     odb.insert(h256{"0x00dce9dd749a8219d3d3735a53a9cc76f6b0c16e332056fa92c9a57293da4c36"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8d180a021737dd3266f379a478ac9f1e6899ea09027566341a4016cd944d95aae9e0bd880a06fffe1f83cd2e295f38a539ae557aa66d1"
         "e9acb6945fabf65c9816c2d61f308c808080a0110f708117b588cda30d6d5aba0ebe5daac383c1fa10b5ed3c833814d0f91115808080a0"
         "aab081acf4a18d888c181314f11c3c44f52a335025f95a04e039fddb636e12aca0b18e6b97ef88b6adf7ac8d31b36c42b95502d7c6b995"
         "f5012a83ec211a891b71a02de3c24dfb35f735349d059217f4625cdacc16abe90efe9a4a6a507aaf0a013c808080");
     odb.insert(h256{"0x37fcf78420c81c4db6ab147afac25622bed85e8fe870e89d4bd61245a28cfb38"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f851808080808080808080a0419a2a04ae8a9150e53bc095e21babb16e986841504151f19ea02c24aa6665bc80a01d71c1f95a7791a391"
         "7af503b788e079cdbde33d940db6cf8cf67e1d23c794708080808080");
     odb.insert(h256{"0x110f708117b588cda30d6d5aba0ebe5daac383c1fa10b5ed3c833814d0f91115"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8709e3dbb30c27553475499211e1f5e402b1b6cb2425377f42e80098238108d3fb84ff84d81e8880746cf5182b425c0a056e81f171bcc"
         "55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad804"
         "5d85a470");
     odb.insert(h256{"0x1d71c1f95a7791a3917af503b788e079cdbde33d940db6cf8cf67e1d23c79470"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a050d7e471339d8f8bc2082d46e5c8808dbe1e6dbb61b57d2a09cb5056293d77d5a00b779aaa7a3fac75c67d132b73c9184837bb"
         "87b2e3d887efc269989d9de1be15a00b03e5864f165e879fe19fdf22b2aef6c995ff5f04f9c813f276ae363f7831c6a031660f9b35b2bd"
         "ab60e49d759004e456b4b4785dd38bdb1b4329917703839e8da0e18d01ba54c03c39b54780ddfab5c8d857f45d6684386d8d75a92b9948"
@@ -282,7 +278,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "2dfbbbb00f68cf8622e26f1792bd79bf54dbbb71d2406b3567a00eb6bea6903a682642391ae4ed538e5d0a47a1b44340fac29163971045"
         "4ebb16a02927f4b3f095b6b94c560cda33906aad9739738fdd8b7d25df03bf0ed7b0e8f880");
     odb.insert(h256{"0x452a655c6f5da7488ab53f9d13de5cca30150ef2ee2e3ea9294d6fa564db62b2"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0022f94fbe307cbb1e956286f7486e96f668a040b618df1b35b3f1b89e79ae622a059b2fc74bd52575cbf35230aaab03c8c2f55"
         "3f80a81a8982ded179c31c57ab82a0e3e221863f48013fcd56b216fbbb531d7918a6617e78bfe9225524b366cb692ca093c9851aab8a95"
         "73f6622fc9881a91235771940050dbfb0e36df41e858aebf01a0b05fe8eb595517f459ac316e552ef3cb687c4607369b5066bb6f199e0e"
@@ -294,17 +290,17 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "1f779e4f287ad62eabf99cecf2e182d4e1a18ecf5bfaaab026a0093b6aefc3c9c918e18518dd58aa912fac2a671393d4f3154f96de757c"
         "0ae7d5a0bd3e06615dce439278e724f20623c80f8db7ecd9eaa5f4d64e2f10bca6b79d8480");
     odb.insert(h256{"0x2927f4b3f095b6b94c560cda33906aad9739738fdd8b7d25df03bf0ed7b0e8f8"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f89180a05587725cb2fcc223d2ec8a0050391622bc117ca1b828e69e91682bb234d04a24808080a052d48d039cd22098486c71eb95f965"
         "6d8369d9c506ca47c4bcedc1e9d554aad1a0ba4ba8e064b1fc2273267fd1942f211233edd61388c6c5644d561dd0f2a491518080808080"
         "808080a010d3c12c3e1efce1c97c3530a568ebfb38479624a66e6f8cab462b9a90b0b43480");
     odb.insert(h256{"0x59b2fc74bd52575cbf35230aaab03c8c2f553f80a81a8982ded179c31c57ab82"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8749f209f05d2dac481a991ac6466e42d76cfcbfe9d59681d3f255cc95c3b87cbe0b852f8508210108a1749dd67aa0e27357838a056e8"
         "1f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b"
         "7bfad8045d85a470");
     odb.insert(h256{"0x52d48d039cd22098486c71eb95f9656d8369d9c506ca47c4bcedc1e9d554aad1"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0bc2f72c8987a2920ed00c50876adb90165b629eb55d42e827a3b21f1f588b1a4a0e32938a4aa3d516a8f94084cc99ca3ae6e13"
         "bddc85f801daa361fefe2316b6cfa05229e0dd6204f7f78ab989f646f3c62143c1069922357960c4b93f941ac26dffa0359c0beff5223f"
         "28bcaa8c3878c6ab10fe009f2abf03e26839ed027992a493e7a0d99f1fc37b3bbc9ce5cee9e7b58980f16a8ba65081424a9813def6ac2b"
@@ -316,7 +312,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "73f6e4e6cc3a68b2b4c0ccfad06665767590165cc21df3201ea0e67a01f4eae366f378323ad2fc8953f45c3e5f29ad12a6dcd39b55807a"
         "c0592da008d776bd8c198cbc1ed88d13a247a3096cb667653c9d12432170089d5d2e3a9d80");
     odb.insert(h256{"0x38ed9c5ceb8b929ad261fdba0a9b450df84caff15e9a10643ff8313984cde8a5"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0fe58ebbf1b3967e59caaf962aa5149fc6f73de8824005902d385a0a9f10a7e59a0b71a31e578d9b72ca63e60c4464f1f928b7d"
         "ef77b07af99815d80d6948feedf4a0d2bb428a5f97b141a41249f7be4a20b9e36978191ecf9798c16b40ecd8600140a0bbce24ae49fbbd"
         "2d4d165b5c0188964355e1df541410703be78579df6171c7b7a07aa84792741c58c2cf958339af78c4af6431a648641864d07dde8a97fc"
@@ -328,22 +324,22 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "fc3e48f83874c4ef9e03215f4568eec4ee470716f3d2efc958a0f98915da21921b0c91a728b30e175b035d678f426ad23b746c6ef344dd"
         "31f079a06463f10a53444c72b943c0d88dd8fd1f4e1a56cf2b38307778701d3463430ac480");
     odb.insert(h256{"0x37c012e236a0d44b25548c638a85c274e4ef3945d9401721e1d0d00f6869a47f"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8b1808080a0147106df653127b1633f2192c27b5565c742873a72d8fd4baea5781e06ab949580808080a050bf8d407a0638955a89b2cb"
         "1c0237a0b8e561f9dcab89c638a204a823a23a3f80a0e0021423ef5fb37d686ab6bb50f55fca1aa1e00efc1e5ed1263f0b0c993d3a2a80"
         "a0569a8ad3fa1f34dcffa2eac7fea3237912372f00a5c9e1569e0fcafe970a945080a0a8e072c174a961519091322cc9234d3ef8f3c435"
         "a8a3f4053199d3d8fb299bdb8080");
     odb.insert(h256{"0x6c99a2df8e197a2c2bde480bc8d5703698a9b87e9cb9d5a16337c21251dfa989"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f85180808080a0d61c1bed719cf56c1bbf440311fdfc8db472af9375c9574326a364ea0fb585a98080808080a0040a878d39e577a17530"
         "8d815d07eedb77e3b75c1e5ca7f22ee3cdf3f5d8ba14808080808080");
     odb.insert(h256{"0xa8e072c174a961519091322cc9234d3ef8f3c435a8a3f4053199d3d8fb299bdb"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8729e3236a9a856bf5bed4d5dbd59e1c6194206269ddd1402847d2c38d3721fabb851f84f829d2289b73781c6408f4ece85a056e81f17"
         "1bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfa"
         "d8045d85a470");
     odb.insert(h256{"0xd61c1bed719cf56c1bbf440311fdfc8db472af9375c9574326a364ea0fb585a9"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0f509295a5f60cc9fbc42d6eae8cd4ed2cbf4be5fde0dbf8fd36d79aabd873192a0fd93422448ee0108603534321f5960a6f584"
         "4bdfaf9d47fa24509fb955c3f6bfa00dc462188d4843070fce2d05afb0e5e3fb4250e4c001faccaa4cb3996d11c61ba01c5bafdc0a5518"
         "4d8bed3f1c2a8418a41f2e9a6c2926e8dbf5fd93aa16bfdee1a06a584e2e61061f0e6194349a88c8c1a1cbcc0ebdaa012a220c64768ccd"
@@ -355,7 +351,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "d0cb2a6244c85d037df8f97d6c9a5b5f4ac488cee3fccb593aa0ce25bb05a54fb7caf6e0e735a8dc652b71217696453241fb6c3f9888f9"
         "a466a5a06e9ca2ce6467d955b847219c2faee6e7f98c72d46c07d520f782178788a9a86880");
     odb.insert(h256{"0x1eb80138a163e29874e560b06be8e6e10d7b1f64bac73a82156caa967a5aaaf9"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a04f43e22a8206ccced30804b67962dbf749457b5b29f0bafdf27c81234a6e4f81a01e240f96a4ebe85252bfb1cae8875e301a0c"
         "b1c253d619f65248e82b023385c6a0fbeff8b9cdbd8d9fd28b934790e0c0dc99ed32719c081124057f9f3391558196a009839d2ffc3398"
         "5b1fe541ba295ba7e5337f3a41a5df4dae45bf672bf1fc9a82a084499c3ddabfb990874574b17185ddc0988e163459cc1ec7a547272cca"
@@ -367,21 +363,21 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "6143cb59619040bb9f520442c6d99df1f5b6bfc1125ebbf3b8a0db2bc1ff9380d734217e2b1317630cc2431f4dd7d5d166eca2feaa29ab"
         "a880e3a0fd10b75c2be9ea761abc7b4b1234a9fc87b133d1f8f9e3a90131a4376eb0de2e80");
     odb.insert(h256{"0x6e9ca2ce6467d955b847219c2faee6e7f98c72d46c07d520f782178788a9a868"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f871808080a039e5ba0c69b9fa88c008cfec6805620e3e28a6a4397bb5826f9a0acdcf907052a081d7446fab142ff8666cc72142ec5524"
         "a71aace75149e8a299efde5457cae74f808080808080808080a09e8e1be893e7c01f5e5be41deb373c687d0944ad91398d2a68f1ba4c10"
         "4bc1f38080");
     odb.insert(h256{"0xa34aaf8f935a6b51c269ef985324869f6d5d18124a811b7145c7f4e99dadc265"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f85180808080a091e919ec7e0d826bef4ec104d834138cb4f6892fc4292dd391eec68f2c3828e3a080250f3bd29aa3fb73684173505d4d"
         "5fa681d4e0117379345ada99eb35dba7c58080808080808080808080");
     odb.insert(h256{"0x81d7446fab142ff8666cc72142ec5524a71aace75149e8a299efde5457cae74f"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8719e35be01185e0671aaadd758b2803124b5efbf314cb3aa115f86d72b51dd22b850f84e82110c880171ed227221d703a056e81f171b"
         "cc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8"
         "045d85a470");
     odb.insert(h256{"0x91e919ec7e0d826bef4ec104d834138cb4f6892fc4292dd391eec68f2c3828e3"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0f9320540edf944a408f3f915dc1a7658b642537f1f33b8117073ce7360250006a0bb449f92bafc44ad98e191bb88c4214a2ddf"
         "a6bca05f516d9f8163f4127bc6d8a054b996b7e37e97fe9bff11c2ed362741dc98b7db0ca35ab3792275c69a42a496a0cd05b15b306aa3"
         "c3b73be03ebcbc7cd9455a36838eabed25d64a12e453304474a0d9ba211acb3516b865bf04f56c449c86f721cde4a1414e9784aa2f9f6e"
@@ -393,19 +389,19 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "880ad8a9cb0b65ae010f45dcec64e1e9d5e50489d3868091bba004440f32b7a320e1b682ede1caf2a72480121ba0a47333de149843ab14"
         "776df7a0fe5fef759a0841f7e14f049ebabe744552676a6d2c0efd86a1719bf52f4c744c80");
     odb.insert(h256{"0xf509295a5f60cc9fbc42d6eae8cd4ed2cbf4be5fde0dbf8fd36d79aabd873192"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8f1a019acb51587e61e97a39d8d3184a129bcb7a557654dae058c4b255450771b46cd8080a068aaa970a24334ba2b57a39655f53e0c05"
         "da4648487319757e9ae6feda247760a0439c3a137a6e37711aef21f682c8a8124b67fc32f7e313899a359fa1c90bc4a18080a0724d6462"
         "d0e2c715af091a8fd957347f4581ee9cb6f103a14dcdedafda5d587980a0839e1c96b64889f97622a45c9e42072fbdf0a482745f30c3eb"
         "4b0497b2e4c25aa03339fbca1d9ffa5a7326a8b68fe7f60934328914a62c92a64965af46b7e96f7180808080a0353ba91bf038fa266b62"
         "ab964f80b1287341785ea40b56e95b6617b222518f2680");
     odb.insert(h256{"0x103c4188718d05a24df4ee72edf37f6951cf4e98eb0993db4937e0211d97741d"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8729f20f5fddcecd74cc0a76daa84d106c71223e4039b6352264a8b082b0fdb50f0b850f84e8202be88e3ddd1dc7605d980a056e81f17"
         "1bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfa"
         "d8045d85a470");
     odb.insert(h256{"0x439c3a137a6e37711aef21f682c8a8124b67fc32f7e313899a359fa1c90bc4a1"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0623157deb5086a660c8b03f03a7ae60079777943dbddb6cc0842fa233036258ea0c5f46e08fa9fd5c4d4f8593a51bde353a214"
         "e62fc18bb2a7595033cfc6a3a453a0c9308508ece8c220a1e3c02cd74b0d76ca3ffafb54cfa6a0d7178daa4ecc0d67a08a8f2efebc3621"
         "6ac88ed169ff639151d2253a4755a997b8b8bba5c38bce3915a0ddf961604c9410f5cbf99d4d2559478f9897aa62125f05ecd40783c549"
@@ -417,7 +413,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "1b18ff7642691febea3dd4e18a568290e6d065e868d4d24352a08221447bdfd54e1da42d28c14367ee5634f9be8bc08575c186a29a2995"
         "a4c47aa0727501c35593b0f1c37af566226dde0e5bbd2df01a77579a6f538baec6fc77d180");
     odb.insert(h256{"0x267376fca76e075f82388eeb2b87e1fdb251b4c603d5583c63e7ec4323af0bd4"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0bd84eba6b7d2632e53140b6ea8b63b60ba7d542f47b262a052d782b2255b8e98a09921d77b369d8cdc6577e3bf941fc4b56e4a"
         "938962b5c01543670c4e9309ed31a05106bd6d86cdfb1a4a672526e0d8a383ff6740abc15f1714b6581c02d37a73baa06632979289a634"
         "352d1d2217d3701b1d8f03e05e136cbfd456600ab1a0995775a0f38a9f6cced7130adc01132bdf462a02aaa6c19ef1ec39c44887054764"
@@ -429,7 +425,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "4deefc27267e36886d87a5918adb4d26ff046c84aadf5629f5a0bc4724ae2b01ad78415ef827c54e522dc150ca805d6a012edfd9be0ac5"
         "1e57c2a07b03bdf45dc1a3385e5ed2ccf9e03a6b8881de80c766f857a31035a1901c09c380");
     odb.insert(h256{"0x8221447bdfd54e1da42d28c14367ee5634f9be8bc08575c186a29a2995a4c47a"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90131a0f556a0803e39f67ad4333bbcf8bdedad99cf7ff71e8f8d206884ced51c56c22c808080a0eeb8a6fc80c691f7720fc6f0004b14"
         "9b042e4a80a81fdd5a6ef69cb0c10f8c3980a04da6760b2eb7ad5413bbe4f6f572966044517f7349263ad9104fbace3c9fe735a00361d7"
         "73fda06df04b092fad2d254f677ee29f5d558c7543a7d5ccecfc8b99038080a0624bea114ec9dc6fb69ccdd9e0592bd59adfe6bac079ba"
@@ -437,12 +433,12 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "fdcb605bf1b6e8e2796a52ea50d51b6a439201ada04756de48375c073fb25e82a505af1926f98e4a9d48ab074cc676475d4903a26880a0"
         "4b811d6f4e08912f2155018509e9bbc3f830254ca6e7cde9813a61443a88058580");
     odb.insert(h256{"0xbc4724ae2b01ad78415ef827c54e522dc150ca805d6a012edfd9be0ac51e57c2"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8729f2062ee31de9e22a40a72cf987a663e06307f3bc5adafd4a4da51178cfa5607b850f84e8201a8880ed627ceeefdfeaea056e81f17"
         "1bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfa"
         "d8045d85a470");
     odb.insert(h256{"0x4da6760b2eb7ad5413bbe4f6f572966044517f7349263ad9104fbace3c9fe735"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0289b6351b687481f59e435d4bba33a7cad8bb7fad7720ef319d77f3413d99509a0cae9cebafbca49c40756521af74efe7a32b9"
         "7d7949580f656891007f6714222fa02a3fb83104fcb5c0a66d1231d59ccf44ac3ff77d7002d54b1855d7c71742c248a06a69bec7a56486"
         "b9866a013fa286ad1c8b40532ef4f56f3f1fe27a456c8d4172a02aba304c4c99289bb0f977883b69fff66fad925bc4b8e1accd524e32d8"
@@ -454,22 +450,22 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "ff3b1cbc6baeb80ac0ea0cfad64463b8668520d7eba94ad53aa00cf71a312921314e9de5fff29d5c0e65e4c0b3e97f7e44f3d3d90493e6"
         "71fce2a0037dd8348932ad1f4d95d55de98e3b208f3fd194c5c6088fca31a91cfb1260b680");
     odb.insert(h256{"0x14683b97f3c4bf02e4af6e14367d728461a33d6b7f22ef4434721017f9b7732a"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8b1a0b0682f9b3ea9e8327f1ec955f5ba86e00f0db1e3b83a3962d2972914aef8521780808080a07a8e44fcffe4ca7e6f523ac89a8189"
         "b90f64a91e2e0d4e4d8e14376b670aa0ee8080a06087a1ca0413e566f6dd0b4628f484daca1b1d7d539c59b8af7a61718aad9629808080"
         "a07a17b007a798ca61a4b5e3b650fef00765a991c436deac03b7f3cd6c5b744b9d8080a064bd4181386fd6c3150d96b9635776addb240b"
         "68fb8ca20af9cab534bb8731c780");
     odb.insert(h256{"0x037dd8348932ad1f4d95d55de98e3b208f3fd194c5c6088fca31a91cfb1260b6"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f85180808080808080808080a0e2d58864054dc6d9371af86ee464487f85b9d70e5a778d2ddb29b0bd4335073c80a04ba2c50578e7a083"
         "b798cf87cecdf264a65a6d6abb676b4885cdf5a0103e088580808080");
     odb.insert(h256{"0x7a17b007a798ca61a4b5e3b650fef00765a991c436deac03b7f3cd6c5b744b9d"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8709e3ea685c798a83da6262b5f64c480b4a5927a16d1443475a1741ce0131de0b84ff84d0c8912aad10a83aee391f0a056e81f171bcc"
         "55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad804"
         "5d85a470");
     odb.insert(h256{"0xe2d58864054dc6d9371af86ee464487f85b9d70e5a778d2ddb29b0bd4335073c"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0022dc658c54335e88a66f7366bf842eb4c55f7e24da8c80c08d370ef98fb8e00a07c806b5cc362296990599673685cdf3a2b5a"
         "80c7a67e4301ab1eb135f1f1ad52a0f29bef756e86fb26542808b8950c0899355a20bd6d951f38853dcdbe53b63588a00b8303ac672bc3"
         "f1028ada52e9582108535d0ad766ffa0e969b496428f900f44a0fe483b641617431d2441341eafea5545d81a3fb463c83b4978a1c67892"
@@ -481,7 +477,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "ff2bca5a11a1dd0dd4196082c16c2331a82c0c2807ded23caba01b9500e133646edc6ead52ba92c6bc4c096f2a876db646d5d0ca1237d9"
         "9ab736a02b112d35e076360470b8edc07e31b1e650eaa13c2868a64d2400c86946473eab80");
     odb.insert(h256{"0x9049accfd3432fa0c2ad524c407b0452d8c0eb007fb4de79b360794ccabe2210"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a050d7e471339d8f8bc2082d46e5c8808dbe1e6dbb61b57d2a09cb5056293d77d5a00b779aaa7a3fac75c67d132b73c9184837bb"
         "87b2e3d887efc269989d9de1be15a00b03e5864f165e879fe19fdf22b2aef6c995ff5f04f9c813f276ae363f7831c6a031660f9b35b2bd"
         "ab60e49d759004e456b4b4785dd38bdb1b4329917703839e8da0e18d01ba54c03c39b54780ddfab5c8d857f45d6684386d8d75a92b9948"
@@ -493,7 +489,7 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "2dfbbbb00f68cf8622e26f1792bd79bf54dbbb71d2406b3567a00eb6bea6903a682642391ae4ed538e5d0a47a1b44340fac29163971045"
         "4ebb16a052f3c28f7cf697e29c856e28af0f0d8897d037fa654dd6f8ef40b5ae2c06358080");
     odb.insert(h256{"0x2b112d35e076360470b8edc07e31b1e650eaa13c2868a64d2400c86946473eab"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0022f94fbe307cbb1e956286f7486e96f668a040b618df1b35b3f1b89e79ae622a01066914f3c68c80fa50c85129d4093a354b3"
         "749c343871e17ca4ab349fea0544a0e3e221863f48013fcd56b216fbbb531d7918a6617e78bfe9225524b366cb692ca093c9851aab8a95"
         "73f6622fc9881a91235771940050dbfb0e36df41e858aebf01a0b05fe8eb595517f459ac316e552ef3cb687c4607369b5066bb6f199e0e"
@@ -505,12 +501,12 @@ void insert_on_overlay_db(db::OverlayDB& odb) {
         "1f779e4f287ad62eabf99cecf2e182d4e1a18ecf5bfaaab026a0093b6aefc3c9c918e18518dd58aa912fac2a671393d4f3154f96de757c"
         "0ae7d5a0bd3e06615dce439278e724f20623c80f8db7ecd9eaa5f4d64e2f10bca6b79d8480");
     odb.insert(h256{"0x52f3c28f7cf697e29c856e28af0f0d8897d037fa654dd6f8ef40b5ae2c063580"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f89180a05587725cb2fcc223d2ec8a0050391622bc117ca1b828e69e91682bb234d04a24808080a0b1655356d88404b329b99634538b11"
         "2a0a895830a16282c52c280be7306b44aca0ba4ba8e064b1fc2273267fd1942f211233edd61388c6c5644d561dd0f2a491518080808080"
         "808080a010d3c12c3e1efce1c97c3530a568ebfb38479624a66e6f8cab462b9a90b0b43480");
     odb.insert(h256{"0x1066914f3c68c80fa50c85129d4093a354b3749c343871e17ca4ab349fea0544"}, valueBytes);
-    valueBytes = getBytesConstRefFromHex(
+    valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f8749f209f05d2dac481a991ac6466e42d76cfcbfe9d59681d3f255cc95c3b87cbe0b852f8508210108a174ad8c57448e54b0438a056e8"
         "1f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b"
         "7bfad8045d85a470");
@@ -535,12 +531,12 @@ StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks
     return StageResult::kSuccess;
 }
 
-StageResult execute_block(mdbx::txn& txn, Block& block) {
+StageResult execute_block(mdbx::txn& txn, Block& block, OverlayDB& odb) {
     TransactionManager tm{txn};
     const auto config{db::read_chain_config(*tm)};
     const auto storage_mode{db::read_storage_mode(*tm)};
 
-    db::Buffer buffer{txn, 0};
+    OverlayState buffer{odb};
     auto block_num{block.header.number};
     AnalysisCache analysis_cache;
     ExecutionStatePool state_pool;
@@ -550,6 +546,7 @@ StageResult execute_block(mdbx::txn& txn, Block& block) {
     if (!consensus_engine) {
         return StageResult::kUnknownConsensusEngine;
     }
+
 
     //    std::optional<BlockWithHash> bh;
     //
@@ -571,7 +568,7 @@ StageResult execute_block(mdbx::txn& txn, Block& block) {
     }
 
     SILKWORM_LOG(LogLevel::Debug) << "Blocks <= " << block_num << " executed" << std::endl;
-    buffer.write_to_db();
+//    buffer.write_to_db();
     return StageResult::kSuccess;
 }
 

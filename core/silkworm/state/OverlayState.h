@@ -4,31 +4,38 @@
 
 #ifndef SILKWORM_OVERLAYSTATE_H
 #define SILKWORM_OVERLAYSTATE_H
-#include <cassert>
-#include <optional>
+
+#include <unordered_map>
 #include <vector>
 
-#include <absl/container/btree_map.h>
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
-
 #include <silkworm/db/OverlayDB.h>
-#include <silkworm/db/util.hpp>
+#include <silkworm/db/SecureTrieDB.h>
 #include <silkworm/state/state.hpp>
 #include <silkworm/trie/hash_builder.hpp>
 #include <silkworm/types/account.hpp>
 #include <silkworm/types/block.hpp>
 #include <silkworm/types/receipt.hpp>
-#include <silkworm/db/SecureTrieDB.h>
 
-namespace silkworm::db {
+namespace silkworm {
+
+using namespace silkworm::db;
 
 using Address = h160;
 
 class OverlayState : public State {
-  public:
-    explicit OverlayState(OverlayDB odb, mdbx::txn& txn) : m_db{odb}, txn_{txn} {}
+  private:
+    // address -> initial value
+    using AccountChanges = std::unordered_map<evmc::address, std::optional<Account>>;
 
+    // address -> incarnation -> location -> initial value
+    using StorageChanges =
+        std::unordered_map<evmc::address,
+                           std::unordered_map<uint64_t, std::unordered_map<evmc::bytes32, evmc::bytes32>>>;
+
+  public:
+    explicit OverlayState(OverlayDB odb) : m_db{odb}, m_state{&odb} {}
+
+  public:
     std::optional<Account> read_account(const evmc::address& address) const noexcept override;
 
     ByteView read_code(const evmc::bytes32& code_hash) const noexcept override;
@@ -36,7 +43,6 @@ class OverlayState : public State {
     evmc::bytes32 read_storage(const evmc::address& address, uint64_t incarnation,
                                const evmc::bytes32& location) const noexcept override;
 
-    /** Previous non-zero incarnation of an account; 0 if none exists. */
     uint64_t previous_incarnation(const evmc::address& address) const noexcept override;
 
     std::optional<BlockHeader> read_header(uint64_t block_number,
@@ -53,8 +59,6 @@ class OverlayState : public State {
 
     std::optional<evmc::bytes32> canonical_hash(uint64_t block_number) const override;
 
-    ///@}
-
     void insert_block(const Block& block, const evmc::bytes32& hash) override;
 
     void canonize_block(uint64_t block_number, const evmc::bytes32& block_hash) override;
@@ -63,14 +67,6 @@ class OverlayState : public State {
 
     void insert_receipts(uint64_t block_number, const std::vector<Receipt>& receipts) override;
 
-    /** @name State changes
-     *  Change sets are backward changes of the state, i.e. account/storage values <em>at the beginning of a block</em>.
-     */
-    ///@{
-
-    /** Mark the beginning of a new block.
-     * Must be called prior to calling update_account/update_account_code/update_storage.
-     */
     void begin_block(uint64_t block_number) override;
 
     void update_account(const evmc::address& address, std::optional<Account> initial,
@@ -84,65 +80,54 @@ class OverlayState : public State {
 
     void unwind_state_changes(uint64_t block_number) override;
 
-    ///@}
+    size_t number_of_accounts() const { return 0; }
 
-    /// Account (backward) changes per block
-    const absl::btree_map<uint64_t, AccountChanges>& account_changes() const { return account_changes_; }
+    size_t storage_size(const evmc::address& address, uint64_t incarnation) const;
 
-    /// Storage (backward) changes per block
-    const absl::btree_map<uint64_t, StorageChanges>& storage_changes() const { return storage_changes_; }
-
-    /** Approximate size of accumulated DB changes in bytes.*/
-    size_t current_batch_size() const noexcept { return batch_size_; }
-
-    void write_to_db();
+    const std::unordered_map<uint64_t, AccountChanges>& account_changes() const { return account_changes_; }
+    const std::unordered_map<evmc::address, Account>& accounts() const { return accounts_; }
 
   private:
-    void write_to_state_table();
-
-    void bump_batch_size(size_t key_len, size_t value_len);
-
     /// Our overlay for the state tree.
     OverlayDB m_db;
     /// Our state tree, as an OverlayDB DB.
-    SecureTrieDB<evmc::address, OverlayDB> m_state;
+    SecureTrieDB<Address , OverlayDB> m_state;
     /// Our address cache. This stores the states of each address that has (or at least might have)
     /// been changed.
     mutable std::unordered_map<evmc::address, Account> m_cache;
     /// Tracks addresses that are known to not exist.
     mutable std::set<evmc::address> m_nonExistingAccountsCache;
 
+    evmc::bytes32 account_storage_root(const evmc::address& address, uint64_t incarnation) const;
 
-    mdbx::txn& txn_;
-//    uint64_t prune_from_;
-    std::optional<uint64_t> historical_block_{};
+    std::unordered_map<evmc::address, Account> accounts_;
 
-    absl::btree_map<Bytes, BlockHeader> headers_{};
-    absl::btree_map<Bytes, BlockBody> bodies_{};
-    absl::btree_map<Bytes, intx::uint256> difficulty_{};
+    // hash -> code
+    std::unordered_map<evmc::bytes32, Bytes> code_;
 
-    absl::flat_hash_map<evmc::address, std::optional<Account>> accounts_;
+    std::unordered_map<evmc::address, uint64_t> prev_incarnations_;
 
     // address -> incarnation -> location -> value
-    absl::flat_hash_map<evmc::address, absl::btree_map<uint64_t, absl::flat_hash_map<evmc::bytes32, evmc::bytes32>>>
+    std::unordered_map<evmc::address, std::unordered_map<uint64_t, std::unordered_map<evmc::bytes32, evmc::bytes32>>>
         storage_;
 
-    absl::btree_map<uint64_t, AccountChanges> account_changes_;  // per block
-    absl::btree_map<uint64_t, StorageChanges> storage_changes_;  // per block
+    // block number -> hash -> header
+    std::vector<std::unordered_map<evmc::bytes32, BlockHeader>> headers_;
 
-    absl::btree_map<evmc::address, uint64_t> incarnations_;
-    absl::btree_map<evmc::bytes32, Bytes> hash_to_code_;
-    absl::btree_map<Bytes, evmc::bytes32> storage_prefix_to_code_hash_;
-    absl::btree_map<Bytes, Bytes> receipts_;
-    absl::btree_map<Bytes, Bytes> logs_;
+    // block number -> hash -> body
+    std::vector<std::unordered_map<evmc::bytes32, BlockBody>> bodies_;
 
-    size_t batch_size_{0};
+    // block number -> hash -> total difficulty
+    std::vector<std::unordered_map<evmc::bytes32, intx::uint256>> difficulty_;
 
-    // Current block stuff
-//    uint64_t block_number_{0};
-    absl::flat_hash_set<evmc::address> changed_storage_;
+    std::vector<evmc::bytes32> canonical_hashes_;
+
+    std::unordered_map<uint64_t, AccountChanges> account_changes_;  // per block
+    std::unordered_map<uint64_t, StorageChanges> storage_changes_;  // per block
+
+    uint64_t block_number_{0};
 };
 
-}  // namespace silkworm::db
+}  // namespace silkworm
 
 #endif  // SILKWORM_OVERLAYSTATE_H

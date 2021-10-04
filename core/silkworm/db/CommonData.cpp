@@ -69,6 +69,12 @@ bytes silkworm::db::fromHex(std::string const& _s) {
     return ret;
 }
 
+bytesConstRef silkworm::db::getBytesConstRefFromHex(std::string const& _s) {
+    auto fHex = silkworm::db::fromHex(_s);
+    return silkworm::db::getBytesConstRef(fHex);
+}
+
+
 bytesConstRef silkworm::db::getBytesConstRef(std::vector<uint8_t> ret) {
     uint8_t values[ret.size()];
     std::copy(ret.begin(), ret.end(), values);

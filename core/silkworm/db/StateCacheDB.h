@@ -34,7 +34,7 @@ class StateCacheDB {
     h256Hash keys() const;
 
   protected:
-    std::unordered_map<silkworm::db::h256, std::pair<std::string, unsigned>> m_main;
+    std::unordered_map<h256, std::pair<std::string, unsigned>> m_main;
     mutable bool m_enforceRefs = false;
 };
 }  // namespace silkworm::db

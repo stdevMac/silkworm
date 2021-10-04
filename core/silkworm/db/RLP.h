@@ -65,7 +65,7 @@ class RLP {
     explicit RLP(bytesConstRef _d, Strictness _s = VeryStrict);
 
     /// Construct a node of value given in the bytes.
-//    explicit RLP(bytes const& _d, Strictness _s = VeryStrict) : RLP(bytesConstRef(_b, _s), _st) {}
+    explicit RLP(bytes const& _d, Strictness _s = VeryStrict) : RLP(silkworm::db::getBytesConstRef(_d), _s) {}
 
     /// Construct a node to read RLP data in the bytes given.
     RLP(byte const* _b, unsigned _s, Strictness _st = VeryStrict) : RLP(bytesConstRef(_b, _s), _st) {}
@@ -381,18 +381,18 @@ template <>
 struct Converter<uint64_t> {
     static uint64_t convert(RLP const& _r, int _flags) { return _r.toInt<uint64_t>(_flags); }
 };
-//template <>
-//struct Converter<u160> {
-//    static u160 convert(RLP const& _r, int _flags) { return _r.toInt<u160>(_flags); }
-//};
-//template <>
-//struct Converter<u256> {
-//    static u256 convert(RLP const& _r, int _flags) { return _r.toInt<u256>(_flags); }
-//};
-//template <>
-//struct Converter<bigint> {
-//    static bigint convert(RLP const& _r, int _flags) { return _r.toInt<bigint>(_flags); }
-//};
+// template <>
+// struct Converter<u160> {
+//     static u160 convert(RLP const& _r, int _flags) { return _r.toInt<u160>(_flags); }
+// };
+// template <>
+// struct Converter<u256> {
+//     static u256 convert(RLP const& _r, int _flags) { return _r.toInt<u256>(_flags); }
+// };
+// template <>
+// struct Converter<bigint> {
+//     static bigint convert(RLP const& _r, int _flags) { return _r.toInt<bigint>(_flags); }
+// };
 template <unsigned N>
 struct Converter<FixedHash<N>> {
     static FixedHash<N> convert(RLP const& _r, int _flags) { return _r.toHash<FixedHash<N>>(_flags); }
@@ -437,10 +437,10 @@ class RLPStream {
     ~RLPStream() {}
 
     /// Append given datum to the byte stream.
-//    RLPStream& append(unsigned _s) { return append(bigint(_s)); }
-//    RLPStream& append(u160 _s) { return append(bigint(_s)); }
-//    RLPStream& append(u256 _s) { return append(bigint(_s)); }
-//    RLPStream& append(bigint _s);
+    //    RLPStream& append(unsigned _s) { return append(bigint(_s)); }
+    //    RLPStream& append(u160 _s) { return append(bigint(_s)); }
+    //    RLPStream& append(u256 _s) { return append(bigint(_s)); }
+    //    RLPStream& append(bigint _s);
     RLPStream& append(bytesConstRef _s, bool _compact = false);
     RLPStream& append(bytes const& _s) { return append(bytesConstRef(&_s)); }
     RLPStream& append(std::string const& _s) { return append(bytesConstRef(_s)); }
@@ -493,12 +493,12 @@ class RLPStream {
     /// Appends a list.
     RLPStream& appendList(size_t _items);
     RLPStream& appendList(bytesConstRef _rlp);
-//    RLPStream& appendList(bytes const& _rlp) { return appendList(&_rlp); }
-//    RLPStream& appendList(RLPStream const& _s) { return appendList(&_s.out()); }
+    //    RLPStream& appendList(bytes const& _rlp) { return appendList(&_rlp); }
+    //    RLPStream& appendList(RLPStream const& _s) { return appendList(&_s.out()); }
 
     /// Appends raw (pre-serialised) RLP data. Use with caution.
     RLPStream& appendRaw(bytesConstRef _rlp, size_t _itemCount = 1);
-//    RLPStream& appendRaw(bytes const& _rlp, size_t _itemCount = 1) { return appendRaw(&_rlp, _itemCount); }
+    //    RLPStream& appendRaw(bytes const& _rlp, size_t _itemCount = 1) { return appendRaw(&_rlp, _itemCount); }
 
     /// Shift operators for appending data items.
     template <class T>
@@ -514,19 +514,22 @@ class RLPStream {
 
     /// Read the byte stream.
     bytes const& out() const {
-//        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not empty"));
+        //        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not
+        //        empty"));
         return m_out;
     }
 
     /// Invalidate the object and steal the output byte stream.
     bytes&& invalidate() {
-//        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not empty"));
+        //        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not
+        //        empty"));
         return std::move(m_out);
     }
 
     /// Swap the contents of the output stream out for some other byte array.
     void swapOut(bytes& _dest) {
-//        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not empty"));
+        //        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not
+        //        empty"));
         swap(m_out, _dest);
     }
 

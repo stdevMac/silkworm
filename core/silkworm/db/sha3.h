@@ -23,6 +23,8 @@ bool sha3(bytesConstRef _input, bytesRef o_output) noexcept;
 /// Calculate SHA3-256 hash of the given input, returning as a 256-bit hash.
 inline h256 sha3(bytesConstRef _input) noexcept {
     h256 ret;
+    std::string p{_input.begin(), _input.end()};
+    (void)p;
     sha3(_input, ret.ref());
     return ret;
 }

@@ -55,7 +55,7 @@ inline StageResult stage_execution(TransactionManager& txn, const std::filesyste
     return stage_execution(txn, etl_path, kDefaultBatchSize, prune_from);
 }
 StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks_rlp);
-StageResult execute_block(mdbx::txn& txn, Block& block);
+StageResult execute_block(mdbx::txn& txn, Block& block, db::OverlayDB& odb);
 void insert_witness(mdbx::txn& txn, silkworm::db::OverlayDB& odb);
 void insert_on_overlay_db(db::OverlayDB& odb);
 

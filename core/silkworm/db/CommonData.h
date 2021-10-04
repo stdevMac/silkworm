@@ -59,7 +59,7 @@ std::string toHexPrefixed(T const& _data) {
 /// If _throw = ThrowType::DontThrow, it replaces bad hex characters with 0's, otherwise it will throw an exception.
 bytes fromHex(std::string const& _s);
 
-//bytesConstRef getBytesConstRefFromHex(std::string const& _s);
+bytesConstRef getBytesConstRefFromHex(std::string const& _s);
 
 bytesConstRef getBytesConstRef(std::vector<uint8_t> ret);
 

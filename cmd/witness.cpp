@@ -3877,7 +3877,7 @@ int main(int argc, char* argv[]) {
 
         (void)rlp::decode(in, bb);
         bb.recover_senders();
-        auto execution_result{stagedsync::execute_block(txn, bb)};
+        auto execution_result{stagedsync::execute_block(txn, bb, odb)};
 
         if (execution_result == silkworm::stagedsync::StageResult::kSuccess) {
             SILKWORM_LOG(LogLevel::Info) << "The block process fine" << std::endl;
