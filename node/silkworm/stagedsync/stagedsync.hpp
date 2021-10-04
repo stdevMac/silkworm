@@ -25,33 +25,39 @@
 #include <silkworm/db/tables.hpp>
 #include <silkworm/stagedsync/transaction_manager.hpp>
 #include <silkworm/stagedsync/util.hpp>
+#include <silkworm/db/OverlayDB.h>
 
 namespace silkworm::stagedsync {
 
 constexpr size_t kDefaultBatchSize = 512_Mebi;
 constexpr size_t kDefaultRecoverySenderBatch = 50'000;  // This a number of transactions not number of bytes
 
-typedef StageResult (*StageFunc)(TransactionManager&, const std::filesystem::path& etl_path,  uint64_t prune_from);
-typedef StageResult (*UnwindFunc)(TransactionManager&, const std::filesystem::path& etl_path, uint64_t unwind_to );
-typedef StageResult (*PruneFunc)(TransactionManager&, const std::filesystem::path& etl_path,  uint64_t prune_from);
+typedef StageResult (*StageFunc)(TransactionManager&, const std::filesystem::path& etl_path, uint64_t prune_from);
+typedef StageResult (*UnwindFunc)(TransactionManager&, const std::filesystem::path& etl_path, uint64_t unwind_to);
+typedef StageResult (*PruneFunc)(TransactionManager&, const std::filesystem::path& etl_path, uint64_t prune_from);
 
 struct Stage {
-    StageFunc   stage_func;
+    StageFunc stage_func;
     UnwindFunc unwind_func;
-    PruneFunc   prune_func;
-    uint64_t            id;
+    PruneFunc prune_func;
+    uint64_t id;
 };
 
 // Stage functions
-StageResult stage_headers    (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
+StageResult stage_headers(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
 StageResult stage_blockhashes(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_bodies     (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_senders    (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_execution  (TransactionManager& txn, const std::filesystem::path& etl_path, size_t batch_size, uint64_t prune_from);
-inline StageResult stage_execution(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0) {
+StageResult stage_bodies(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
+StageResult stage_senders(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
+StageResult stage_execution(TransactionManager& txn, const std::filesystem::path& etl_path, size_t batch_size,
+                            uint64_t prune_from);
+inline StageResult stage_execution(TransactionManager& txn, const std::filesystem::path& etl_path,
+                                   uint64_t prune_from = 0) {
     return stage_execution(txn, etl_path, kDefaultBatchSize, prune_from);
 }
-StageResult insert_blocks  (mdbx::txn& txn, const std::vector<std::string>& blocks_rlp);
+StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks_rlp);
+StageResult execute_block(mdbx::txn& txn, Block& block);
+void insert_witness(mdbx::txn& txn, silkworm::db::OverlayDB& odb);
+void insert_on_overlay_db(db::OverlayDB& odb);
 
 /* HashState Promotion Functions*/
 
@@ -73,36 +79,38 @@ void hashstate_promote_clean_code(mdbx::txn& txn, const std::filesystem::path& e
 void hashstate_promote_clean_state(mdbx::txn& txn, const std::filesystem::path& etl_path);
 
 /* **************************** */
-StageResult stage_hashstate      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_interhashes    (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_account_history(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_storage_history(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_log_index      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
-StageResult stage_tx_lookup      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
+StageResult stage_hashstate(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
+StageResult stage_interhashes(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
+StageResult stage_account_history(TransactionManager& txn, const std::filesystem::path& etl_path,
+                                  uint64_t prune_from = 0);
+StageResult stage_storage_history(TransactionManager& txn, const std::filesystem::path& etl_path,
+                                  uint64_t prune_from = 0);
+StageResult stage_log_index(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
+StageResult stage_tx_lookup(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from = 0);
 
 // Unwind functions
-StageResult no_unwind             (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
-StageResult unwind_blockhashes    (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
-StageResult unwind_senders        (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
-StageResult unwind_execution      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
-StageResult unwind_hashstate      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
-StageResult unwind_interhashes    (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult no_unwind(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult unwind_blockhashes(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult unwind_senders(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult unwind_execution(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult unwind_hashstate(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult unwind_interhashes(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
 StageResult unwind_account_history(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
 StageResult unwind_storage_history(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
-StageResult unwind_log_index      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
-StageResult unwind_tx_lookup      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult unwind_log_index(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
+StageResult unwind_tx_lookup(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t unwind_to);
 // Prune functions
-StageResult no_prune             (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
-StageResult prune_senders        (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
-StageResult prune_execution      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
+StageResult no_prune(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
+StageResult prune_senders(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
+StageResult prune_execution(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
 StageResult prune_account_history(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
 StageResult prune_storage_history(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
-StageResult prune_log_index      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
-StageResult prune_tx_lookup      (TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
+StageResult prune_log_index(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
+StageResult prune_tx_lookup(TransactionManager& txn, const std::filesystem::path& etl_path, uint64_t prune_from);
 
 std::vector<Stage> get_archive_node_stages();
-std::vector<Stage> get_pruned_node_stages ();
-std::vector<Stage> get_miner_mode_stages  ();
+std::vector<Stage> get_pruned_node_stages();
+std::vector<Stage> get_miner_mode_stages();
 
 }  // namespace silkworm::stagedsync
 
