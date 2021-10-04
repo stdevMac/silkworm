@@ -39,20 +39,15 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 using namespace silkworm;
 
 int main(int argc, char* argv[]) {
-    CLI::App app{"Generate account & storage tries in the DB and compute the state root"};
+    CLI::App app{"Generate State tries and Run Block using witness only"};
 
     namespace fs = std::filesystem;
     using namespace silkworm;
 
     std::string chain_data{DataDirectory{}.chaindata().path().string()};
 
-    std::string batch_size_str{"512MB"};
-    app.add_option("--batch", batch_size_str, "Batch size of DB changes to accumulate before committing", true);
-
     app.add_option("--chaindata", chain_data, "Path to a database populated by Erigon", true)
         ->check(CLI::ExistingDirectory);
-    bool prune{false};
-    app.add_flag("--prune", prune, "Enable pruned mode");
 
     CLI11_PARSE(app, argc, argv);
 
