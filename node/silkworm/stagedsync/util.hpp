@@ -21,7 +21,7 @@
 #include <silkworm/db/mdbx.hpp>
 
 /*
-Part of the compatibility layer with the Erigon DB format;
+Part of the compatibility layer with the Erigon Database format;
 see its package dbutils.
 */
 

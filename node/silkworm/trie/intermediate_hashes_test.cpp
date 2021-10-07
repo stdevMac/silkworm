@@ -223,7 +223,7 @@ TEST_CASE("Account and storage trie") {
     hb.add_leaf(unpack_nibbles(full_view(key6)), a6.rlp(/*storage_root=*/kEmptyRoot));
 
     // ----------------------------------------------------------------
-    // Populate account & storage trie DB tables
+    // Populate account & storage trie Database tables
     // ----------------------------------------------------------------
 
     const evmc::bytes32 expected_root{hb.root_hash()};

@@ -35,7 +35,9 @@ void AccountTrieCursor::consume_node(ByteView to) {
     }
 
     const auto node{unmarshal_node(db::from_slice(entry.value))};
-    assert(node != std::nullopt);
+    if(node != std::nullopt) {
+        return;
+    }
     assert(node->state_mask() != 0);
     uint8_t nibble{0};
     while ((node->state_mask() & (1u << nibble)) == 0) {
@@ -295,6 +297,54 @@ evmc::bytes32 DbTrieLoader::calculate_root(const PrefixSet& changed) {
 
     return hb_.root_hash();
 }
+// See Erigon (p *HashPromoter) Promote
+static void changed_accounts(mdbx::txn& txn, BlockNum from, PrefixSet& out) {
+    // TODO[Issue 179] delete TrieStorage for deleted accounts
+    const Bytes starting_key{db::block_key(from + 1)};
+
+    auto change_cursor{db::open_cursor(txn, db::table::kAccountChangeSet)};
+    change_cursor.lower_bound(db::to_slice(starting_key), /*throw_notfound=*/false);
+    db::cursor_for_each(change_cursor, [&out](mdbx::cursor&, mdbx::cursor::move_result& entry) {
+        const ByteView address{db::from_slice(entry.value).substr(0, kAddressLength)};
+        const auto hashed_address{keccak256(address)};
+        out.insert(ByteView{hashed_address.bytes, kHashLength});
+        return true;
+    });
+}
+
+Account DbTrieLoader::get_account(evmc::address address, BlockNum from) {
+    const ByteView address_b{db::from_slice(db::to_slice(address)).substr(0, kAddressLength)};
+
+    PrefixSet changed;
+    changed_accounts(txn_, from, changed);
+
+    auto acc_state{db::open_cursor(txn_, db::table::kHashedAccounts)};
+
+    for (AccountTrieCursor acc_trie{txn_, changed}; acc_trie.key() != std::nullopt;) {
+        if (acc_trie.can_skip_state()) {
+            assert(acc_trie.hash() != nullptr);
+            hb_.add_branch_node(*acc_trie.key(), *acc_trie.hash(), acc_trie.children_are_in_trie());
+            acc_trie.next(/*skip_children=*/true);
+            continue;
+        }
+
+        const Bytes first_uncovered_prefix{pack_nibbles(*acc_trie.key())};
+        acc_trie.next(/*skip_children=*/false);
+
+        for (auto acc{acc_state.lower_bound(db::to_slice(first_uncovered_prefix), /*throw_notfound=*/false)}; acc.done;
+             acc = acc_state.to_next(/*throw_notfound=*/false)) {
+            const Bytes unpacked_key{unpack_nibbles(db::from_slice(acc.key))};
+            if (acc_trie.key().has_value() && acc_trie.key().value() < unpacked_key) {
+                continue;
+            }
+            const auto [account, err]{decode_account_from_storage(db::from_slice(acc.value))};
+            rlp::err_handler(err);
+            return account;
+        }
+    }
+
+    return {};
+}
 
 static evmc::bytes32 increment_intermediate_hashes(mdbx::txn& txn, const std::filesystem::path& etl_dir,
                                                    const evmc::bytes32* expected_root, const PrefixSet& changed) {
@@ -318,20 +368,6 @@ static evmc::bytes32 increment_intermediate_hashes(mdbx::txn& txn, const std::fi
     return root;
 }
 
-// See Erigon (p *HashPromoter) Promote
-static void changed_accounts(mdbx::txn& txn, BlockNum from, PrefixSet& out) {
-    // TODO[Issue 179] delete TrieStorage for deleted accounts
-    const Bytes starting_key{db::block_key(from + 1)};
-
-    auto change_cursor{db::open_cursor(txn, db::table::kAccountChangeSet)};
-    change_cursor.lower_bound(db::to_slice(starting_key), /*throw_notfound=*/false);
-    db::cursor_for_each(change_cursor, [&out](mdbx::cursor&, mdbx::cursor::move_result& entry) {
-        const ByteView address{db::from_slice(entry.value).substr(0, kAddressLength)};
-        const auto hashed_address{keccak256(address)};
-        out.insert(ByteView{hashed_address.bytes, kHashLength});
-        return true;
-    });
-}
 
 evmc::bytes32 increment_intermediate_hashes(mdbx::txn& txn, const std::filesystem::path& etl_dir, BlockNum from,
                                             const evmc::bytes32* expected_root) {

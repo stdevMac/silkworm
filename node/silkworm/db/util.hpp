@@ -18,7 +18,7 @@
 #define SILKWORM_DB_UTIL_HPP_
 
 /*
-Part of the compatibility layer with the Erigon DB format;
+Part of the compatibility layer with the Erigon Database format;
 see its package dbutils.
 */
 

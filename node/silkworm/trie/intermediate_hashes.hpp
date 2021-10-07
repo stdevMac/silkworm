@@ -17,7 +17,7 @@
 #ifndef SILKWORM_TRIE_INTERMEDIATE_HASHES_HPP_
 #define SILKWORM_TRIE_INTERMEDIATE_HASHES_HPP_
 
-/* On TrieAccount & TrieStorage DB tables
+/* On TrieAccount & TrieStorage Database tables
 
 state_mask - mark prefixes existing in HashedAccount (HashedStorage) table
 tree_mask - mark prefixes existing in TrieAccount (TrieStorage) table
@@ -26,12 +26,12 @@ hashes of branch nodes can be saved)
 
 For example:
 +----------------------------------------------------------------------------------------------------+
-| DB record: 0xB, state_mask: 0b1011, tree_mask: 0b0001, hash_mask: 0b1001, hashes: [x,x]            |
+| Database record: 0xB, state_mask: 0b1011, tree_mask: 0b0001, hash_mask: 0b1001, hashes: [x,x]            |
 +----------------------------------------------------------------------------------------------------+
                 |                                           |                               |
                 v                                           |                               v
 +-----------------------------------------------+           |               +----------------------------------------+
-| DB record: 0xB0, state_mask: 0b10001          |           |               | BranchNode: 0xB3                       |
+| Database record: 0xB0, state_mask: 0b10001          |           |               | BranchNode: 0xB3                       |
 | tree_mask: 0, hash_mask: 0b10000, hashes: [x] |           |               | has no record in TrieAccount           |
 +-----------------------------------------------+           |               +----------------------------------------+
         |                    |                              |                         |                  |
@@ -154,6 +154,8 @@ class DbTrieLoader {
 
     evmc::bytes32 calculate_root(const PrefixSet& changed);
 
+    Account get_account(evmc::address address,BlockNum from);
+
   private:
     mdbx::txn& txn_;
     HashBuilder hb_;
@@ -165,6 +167,9 @@ class WrongRoot : public std::runtime_error {
   public:
     WrongRoot() : std::runtime_error{"wrong trie root"} {}
 };
+
+//static void changed_accounts(mdbx::txn& txn, BlockNum from, PrefixSet& out);
+
 
 // Erigon RegenerateIntermediateHashes
 // might throw WrongRoot

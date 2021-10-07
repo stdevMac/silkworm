@@ -108,7 +108,7 @@ class Buffer : public State {
     /// Storage (backward) changes per block
     const absl::btree_map<uint64_t, StorageChanges>& storage_changes() const { return storage_changes_; }
 
-    /** Approximate size of accumulated DB changes in bytes.*/
+    /** Approximate size of accumulated Database changes in bytes.*/
     size_t current_batch_size() const noexcept { return batch_size_; }
 
     void write_to_db();

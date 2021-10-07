@@ -22,7 +22,7 @@
 #include <silkworm/db/mdbx.hpp>
 
 /*
-Part of the compatibility layer with the Turbo-Geth DB format;
+Part of the compatibility layer with the Turbo-Geth Database format;
 see its common/dbutils/bucket.go.
 */
 namespace silkworm::db::table {

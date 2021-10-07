@@ -47,7 +47,7 @@ static std::pair<db::MapConfig, db::MapConfig> get_tables_for_promote(HashstateO
     }
 }
 
-// ETL key contains hashed location; for DB put we need to move it from key to value
+// ETL key contains hashed location; for Database put we need to move it from key to value
 static void storage_load(const etl::Entry& entry, mdbx::cursor& cursor, MDBX_put_flags_t flags) {
     assert(entry.key.length() == db::kHashedStoragePrefixLength + kHashLength);
 

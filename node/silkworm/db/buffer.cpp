@@ -111,7 +111,7 @@ void Buffer::update_storage(const evmc::address& address, uint64_t incarnation, 
 void Buffer::write_to_state_table() {
     auto state_table{db::open_cursor(txn_, table::kPlainState)};
 
-    // sort before inserting into the DB
+    // sort before inserting into the Database
     absl::btree_set<evmc::address> addresses;
     for (auto& x : accounts_) {
         addresses.insert(x.first);
@@ -140,7 +140,7 @@ void Buffer::write_to_state_table() {
 
                 const auto& contract_storage{contract.second};
 
-                // sort before inserting into the DB
+                // sort before inserting into the Database
                 storage_keys.clear();
                 for (const auto& x : contract_storage) {
                     storage_keys.push_back(x.first);

@@ -21,6 +21,7 @@
 #include <nlohmann/json.hpp>
 
 #include <silkworm/common/endian.hpp>
+#include <silkworm/trie/intermediate_hashes.hpp>
 
 #include "bitmap.hpp"
 #include "tables.hpp"
@@ -278,24 +279,24 @@ std::optional<ByteView> read_code(mdbx::txn& txn, const evmc::bytes32& code_hash
 }
 
 // Erigon FindByHistory for account
-static std::optional<ByteView> historical_account(mdbx::txn& txn, const evmc::address& address, uint64_t block_number) {
-    auto history_table{db::open_cursor(txn, table::kAccountHistory)};
-    const Bytes history_key{account_history_key(address, block_number)};
-    const auto data{history_table.lower_bound(to_slice(history_key), /*throw_notfound=*/false)};
-    if (!data || !data.key.starts_with(to_slice(address))) {
-        return std::nullopt;
-    }
-
-    const auto bitmap{bitmap::read(from_slice(data.value))};
-    const auto change_block{bitmap::seek(bitmap, block_number)};
-    if (!change_block) {
-        return std::nullopt;
-    }
-
-    auto change_set_table{db::open_cursor(txn, table::kAccountChangeSet)};
-    const Bytes change_set_key{block_key(*change_block)};
-    return find_value_suffix(change_set_table, change_set_key, full_view(address));
-}
+//static std::optional<ByteView> historical_account(mdbx::txn& txn, const evmc::address& address, uint64_t block_number) {
+//    auto history_table{db::open_cursor(txn, table::kAccountHistory)};
+//    const Bytes history_key{account_history_key(address, block_number)};
+//    const auto data{history_table.lower_bound(to_slice(history_key), /*throw_notfound=*/false)};
+//    if (!data || !data.key.starts_with(to_slice(address))) {
+//        return std::nullopt;
+//    }
+//
+//    const auto bitmap{bitmap::read(from_slice(data.value))};
+//    const auto change_block{bitmap::seek(bitmap, block_number)};
+//    if (!change_block) {
+//        return std::nullopt;
+//    }
+//
+//    auto change_set_table{db::open_cursor(txn, table::kAccountChangeSet)};
+//    const Bytes change_set_key{block_key(*change_block)};
+//    return find_value_suffix(change_set_table, change_set_key, full_view(address));
+//}
 
 // Erigon FindByHistory for storage
 static std::optional<ByteView> historical_storage(mdbx::txn& txn, const evmc::address& address, uint64_t incarnation,
@@ -325,33 +326,10 @@ static std::optional<ByteView> historical_storage(mdbx::txn& txn, const evmc::ad
 }
 
 std::optional<Account> read_account(mdbx::txn& txn, const evmc::address& address, std::optional<uint64_t> block_num) {
-    std::optional<ByteView> encoded{block_num.has_value() ? historical_account(txn, address, block_num.value())
-                                                          : std::nullopt};
-
-    if (!encoded.has_value()) {
-        auto src{db::open_cursor(txn, table::kPlainState)};
-        if (auto data{src.find({address.bytes, sizeof(evmc::address)}, false)}; data.done) {
-            encoded.emplace(from_slice(data.value));
-        }
-    }
-    if (!encoded.has_value() || encoded->empty()) {
-        return std::nullopt;
-    }
-
-    auto [acc, err]{decode_account_from_storage(encoded.value())};
-    rlp::err_handler(err);
-
-    if (acc.incarnation > 0 && acc.code_hash == kEmptyHash) {
-        // restore code hash
-        auto src{db::open_cursor(txn, table::kPlainContractCode)};
-        auto key{storage_prefix(full_view(address), acc.incarnation)};
-        if (auto data{src.find(to_slice(key), /*throw_notfound*/ false)};
-            data.done && data.value.length() == kHashLength) {
-            std::memcpy(acc.code_hash.bytes, data.value.iov_base, kHashLength);
-        }
-    }
-
-    return acc;
+//    (void)block_num;
+    etl::Collector collector{0};
+    trie::DbTrieLoader loader{txn, collector, collector};
+    return loader.get_account(address, BlockNum{block_num.value()});
 }
 
 evmc::bytes32 read_storage(mdbx::txn& txn, const evmc::address& address, uint64_t incarnation,
