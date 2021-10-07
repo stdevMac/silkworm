@@ -205,7 +205,7 @@ void HashBuilder::gen_struct_step(ByteView current, const ByteView succeeding) {
                 stack_.push_back(wrap_hash(std::get<evmc::bytes32>(value_).bytes));
                 if (node_collector) {
                     if (is_in_db_trie_) {
-                        // keep track of existing records in DB
+                        // keep track of existing records in Database
                         tree_masks_[current.length() - 1] |= 1u << current.back();
                     }
                     // register myself in parent's bitmaps
@@ -220,7 +220,7 @@ void HashBuilder::gen_struct_step(ByteView current, const ByteView succeeding) {
                 // See node/silkworm/trie/intermediate_hashes.hpp
                 const uint16_t flag = 1u << current[from - 1];
 
-                // DB trie can't use hash of an extension node
+                // Database trie can't use hash of an extension node
                 hash_masks_[from - 1] &= ~flag;
 
                 if (tree_masks_[current.length() - 1]) {

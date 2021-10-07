@@ -33,7 +33,9 @@ class OverlayState : public State {
                            std::unordered_map<uint64_t, std::unordered_map<evmc::bytes32, evmc::bytes32>>>;
 
   public:
-    explicit OverlayState(OverlayDB odb) : m_db{odb}, m_state{&odb} {}
+    explicit OverlayState(OverlayDB odb) : m_db{odb}, m_state{&odb} {
+        m_state.init();
+    }
 
   public:
     std::optional<Account> read_account(const evmc::address& address) const noexcept override;
@@ -90,7 +92,7 @@ class OverlayState : public State {
   private:
     /// Our overlay for the state tree.
     OverlayDB m_db;
-    /// Our state tree, as an OverlayDB DB.
+    /// Our state tree, as an OverlayDB Database.
     SecureTrieDB<Address , OverlayDB> m_state;
     /// Our address cache. This stores the states of each address that has (or at least might have)
     /// been changed.

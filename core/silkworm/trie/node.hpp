@@ -68,7 +68,7 @@ std::optional<Node> unmarshal_node(ByteView v);
 
 inline void assert_subset(uint16_t sub, uint16_t sup) {
     auto intersection{sub & sup};
-    assert(intersection == sub);
+//    assert(intersection == sub);
     (void)intersection;
 }
 

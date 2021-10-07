@@ -41,11 +41,11 @@ class ExecutionProcessor {
     // 2) txn.from must be recovered, otherwise kMissingSender will be returned
     ValidationResult validate_transaction(const Transaction& txn) const noexcept;
 
-    // Execute a transaction, but do not write to the DB yet.
+    // Execute a transaction, but do not write to the Database yet.
     // Precondition: transaction must be valid.
     Receipt execute_transaction(const Transaction& txn) noexcept;
 
-    //! \brief Execute the block and write the result to the DB.
+    //! \brief Execute the block and write the result to the Database.
     //! \remarks Warning: This method does not verify state root; pre-Byzantium receipt root isn't validated either.
     //! \pre consensus_engine's pre_validate_block(block) must return kOk.
     [[nodiscard]] ValidationResult execute_and_write_block(std::vector<Receipt>& receipts) noexcept;
@@ -56,7 +56,7 @@ class ExecutionProcessor {
     const EVM& evm() const noexcept { return evm_; }
 
   private:
-    /// Execute the block, but do not write to the DB yet.
+    /// Execute the block, but do not write to the Database yet.
     /// Does not perform any post-execution validation (for example, receipt root is not checked).
     /// Precondition: pre_validate_block(block) must return kOk.
     [[nodiscard]] ValidationResult execute_block_no_post_validation(std::vector<Receipt>& receipts) noexcept;

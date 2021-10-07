@@ -28,7 +28,6 @@ const state::Object* IntraBlockState::get_object(const evmc::address& address) c
     if (it != objects_.end()) {
         return &it->second;
     }
-
     std::optional<Account> account{db_.read_account(address)};
     if (account == std::nullopt) {
         return nullptr;

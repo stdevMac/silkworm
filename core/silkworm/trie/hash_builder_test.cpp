@@ -122,7 +122,7 @@ TEST_CASE("HashBuilder2") {
     // extension node
     Bytes rlp1{*from_hex("e216a0")};
     std::copy_n(hash1_2.bytes, kHashLength, std::back_inserter(rlp1));
-    ethash::hash256 hash1{keccak256(rlp1)};
+    ethash::hash256 x{keccak256(rlp1)};
 
     HashBuilder hb1;
     hb1.add_leaf(unpack_nibbles(key0), val0);
