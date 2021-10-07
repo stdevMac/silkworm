@@ -31,7 +31,7 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 #include <silkworm/trie/intermediate_hashes.hpp>
 
 int main(int argc, char* argv[]) {
-    CLI::App app{"Generate account & storage tries in the DB and compute the state root"};
+    CLI::App app{"Generate account & storage tries in the Database and compute the state root"};
 
     namespace fs = std::filesystem;
     using namespace silkworm;
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
     CLI11_PARSE(app, argc, argv);
 
-    SILKWORM_LOG(LogLevel::Info) << "Regenerating account & storage tries. DB: " << chaindata << std::endl;
+    SILKWORM_LOG(LogLevel::Info) << "Regenerating account & storage tries. Database: " << chaindata << std::endl;
 
     try {
         auto data_dir{DataDirectory::from_chaindata(chaindata)};

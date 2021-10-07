@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 
     CLI11_PARSE(app, argc, argv);
 
-    SILKWORM_LOG(LogLevel::Info) << "Regenerating account & storage tries. DB: " << chain_data << std::endl;
+    SILKWORM_LOG(LogLevel::Info) << "Regenerating account & storage tries. Database: " << chain_data << std::endl;
 
     try {
         auto data_dir{DataDirectory::from_chaindata(chain_data)};

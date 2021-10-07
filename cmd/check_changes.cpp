@@ -47,7 +47,7 @@ static void print_storage_changes(const db::StorageChanges& s) {
 }
 
 int main(int argc, char* argv[]) {
-    CLI::App app{"Executes Ethereum blocks and compares resulting change sets against DB"};
+    CLI::App app{"Executes Ethereum blocks and compares resulting change sets against Database"};
 
     std::string chaindata{DataDirectory{}.chaindata().path().string()};
     app.add_option("--chaindata", chaindata, "Path to a database populated by Erigon", true)
@@ -114,14 +114,14 @@ int main(int argc, char* argv[]) {
                     } else if (Bytes val{calculated_account_changes.at(e.first)}; val != e.second) {
                         SILKWORM_LOG(LogLevel::Error) << "Value mismatch for " << to_hex(e.first) << ":\n"
                                                       << to_hex(val) << "\n"
-                                                      << "vs DB\n"
+                                                      << "vs Database\n"
                                                       << to_hex(e.second) << std::endl;
                         mismatch = true;
                     }
                 }
                 for (const auto& e : calculated_account_changes) {
                     if (!db_account_changes.contains(e.first)) {
-                        SILKWORM_LOG(LogLevel::Error) << to_hex(e.first) << " is not in DB" << std::endl;
+                        SILKWORM_LOG(LogLevel::Error) << to_hex(e.first) << " is not in Database" << std::endl;
                         mismatch = true;
                     }
                 }

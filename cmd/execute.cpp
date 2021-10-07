@@ -26,7 +26,7 @@
 int main(int argc, char* argv[]) {
     using namespace silkworm;
 
-    CLI::App app{"Execute Ethereum blocks and write the result into the DB"};
+    CLI::App app{"Execute Ethereum blocks and write the result into the Database"};
 
     std::string chaindata{DataDirectory{}.chaindata().path().string()};
 
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
         ->check(CLI::ExistingDirectory);
 
     std::string batch_size_str{"512MB"};
-    app.add_option("--batch", batch_size_str, "Batch size of DB changes to accumulate before committing", true);
+    app.add_option("--batch", batch_size_str, "Batch size of Database changes to accumulate before committing", true);
 
     app.add_flag("--prune", prune, "Enable pruned mode");
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
         return -3;
     }
 
-    SILKWORM_LOG(LogLevel::Info) << "Starting block execution. DB: " << chaindata << std::endl;
+    SILKWORM_LOG(LogLevel::Info) << "Starting block execution. Database: " << chaindata << std::endl;
 
     SILKWORM_LOG_VERBOSITY(LogLevel::Debug);
 
