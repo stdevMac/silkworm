@@ -34,14 +34,7 @@ namespace db {
         void insert(Slice _key, Slice _value) override;
         void kill(Slice _key) override;
 
-        std::unique_ptr<WriteBatchFace> createWriteBatch() const override;
         void commit(std::unique_ptr<WriteBatchFace> _batch) override;
-
-        // A database must implement the `forEach` method that allows the caller
-        // to pass in a function `f`, which will be called with the key and value
-        // of each record in the database. If `f` returns false, the `forEach`
-        // method must return immediately.
-        void forEach(std::function<bool(Slice, Slice)> _f) const override;
 
         size_t size() const { return m_db.size(); }
 

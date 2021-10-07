@@ -23,10 +23,6 @@ namespace db {
 
     void MemoryDB::kill(Slice _key) { m_db.erase(_key.toString()); }
 
-    std::unique_ptr<WriteBatchFace> MemoryDB::createWriteBatch() const {
-        return std::unique_ptr<WriteBatchFace>(new MemoryDBWriteBatch);
-    }
-
     void MemoryDB::commit(std::unique_ptr<WriteBatchFace> _batch) {
         if (!_batch) {
             //            SILKWORM_LOG(LogLevel::Info) << "Cannot commit null batch" << std::endl;
@@ -39,13 +35,6 @@ namespace db {
         auto const& batch = batchPtr->writeBatch();
         for (auto& e : batch) {
             m_db.insert({e.first, e.second});
-        }
-    }
-    void MemoryDB::forEach(std::function<bool(Slice, Slice)> _f) const {
-        for (auto const& e : m_db) {
-            if (!_f(Slice(e.first), Slice(e.second))) {
-                return;
-            }
         }
     }
 

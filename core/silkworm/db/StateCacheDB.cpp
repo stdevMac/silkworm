@@ -25,35 +25,35 @@ StateCacheDB& StateCacheDB::operator=(StateCacheDB const& _c) {
 }
 
 std::string StateCacheDB::lookup(h256 const& _h) const {
-//    auto t = m_main.size();
-    auto it = m_main.find(_h);
+    //    auto t = m_main.size();
+    auto it = m_main.find(_h.hex());
     if (it != m_main.end()) {
-        if (!m_enforceRefs || it->second.second > 0) return it->second.first;
+        return it->second.first;
     }
     return {};
 }
 
 bool StateCacheDB::exists(h256 const& _h) const {
-    auto it = m_main.find(_h);
-    if (it != m_main.end() && (!m_enforceRefs || it->second.second > 0)) return true;
+    auto it = m_main.find(_h.hex());
+    if (it != m_main.end()) return true;
     return false;
 }
 
 void StateCacheDB::insert(h256 const& _h, bytesConstRef _v) {
-    auto it = m_main.find(_h);
+    auto it = m_main.find(_h.hex());
     if (it != m_main.end()) {
         it->second.first = _v.toString();
         it->second.second++;
     } else
-        m_main[_h] = make_pair(_v.toString(), 1);
+        m_main[_h.hex()] = make_pair(_v.toString(), 1);
     auto t = m_main.size();
     (void)t;
 }
 
 bool StateCacheDB::kill(h256 const& _h) {
-    if (m_main.count(_h)) {
-        if (m_main[_h].second > 0) {
-            m_main[_h].second--;
+    if (m_main.count(_h.hex())) {
+        if (m_main[_h.hex()].second > 0) {
+            m_main[_h.hex()].second--;
             return true;
         }
     }
@@ -72,7 +72,7 @@ void StateCacheDB::purge() {
 h256Hash StateCacheDB::keys() const {
     h256Hash ret;
     for (auto const& i : m_main)
-        if (i.second.second) ret.insert(i.first);
+        if (i.second.second) ret.insert(h256{i.first});
     return ret;
 }
 

@@ -2,8 +2,8 @@
 // Created by Marcos Maceo on 10/3/21.
 //
 
-#ifndef SILKWORM_COMMONDATA_H
-#define SILKWORM_COMMONDATA_H
+#ifndef SILKWORM_COMMON_DATA_H
+#define SILKWORM_COMMON_DATA_H
 
 #include <algorithm>
 #include <cstring>
@@ -19,7 +19,6 @@ namespace silkworm::db {
 // String conversion functions, mainly to/from hex/nibble/byte representations.
 
 enum class WhenError {
-    DontThrow = 0,
     Throw = 1,
 };
 
@@ -47,13 +46,6 @@ std::string toHex(T const& _data) {
     return toHex(_data.begin(), _data.end(), "");
 }
 
-/// Convert a series of bytes to the corresponding hex string with 0x prefix.
-/// @example toHexPrefixed("A\x69") == "0x4169"
-template <class T>
-std::string toHexPrefixed(T const& _data) {
-    return toHex(_data.begin(), _data.end(), "0x");
-}
-
 /// Converts a (printable) ASCII hex string into the corresponding byte stream.
 /// @example fromHex("41626261") == asBytes("Abba")
 /// If _throw = ThrowType::DontThrow, it replaces bad hex characters with 0's, otherwise it will throw an exception.
@@ -66,22 +58,9 @@ bytesConstRef getBytesConstRef(std::vector<uint8_t> ret);
 /// @returns true if @a _s is a hex string.
 bool isHex(std::string const& _s) noexcept;
 
-/// @returns true if @a _hash is a hash conforming to FixedHash type @a T.
-template <class T>
-static bool isHash(std::string const& _hash) {
-    return (_hash.size() == T::size * 2 || (_hash.size() == T::size * 2 + 2 && _hash.substr(0, 2) == "0x")) &&
-           isHex(_hash);
-}
-
 /// Converts byte array to a string containing the same (binary) data. Unless
 /// the byte array happens to contain ASCII data, this won't be printable.
 inline std::string asString(bytes const& _b) {
-    return std::string(reinterpret_cast<char const*>(_b.data()), reinterpret_cast<char const*>(_b.data() + _b.size()));
-}
-
-/// Converts byte array ref to a string containing the same (binary) data. Unless
-/// the byte array happens to contain ASCII data, this won't be printable.
-inline std::string asString(bytesConstRef _b) {
     return std::string(reinterpret_cast<char const*>(_b.data()), reinterpret_cast<char const*>(_b.data() + _b.size()));
 }
 
@@ -89,10 +68,6 @@ inline std::string asString(bytesConstRef _b) {
 inline bytes asBytes(std::string const& _b) {
     return bytes(reinterpret_cast<byte const*>(_b.data()), reinterpret_cast<byte const*>(_b.data() + _b.size()));
 }
-
-/// Converts a string into the big-endian base-16 stream of integers (NOT ASCII).
-/// @example asNibbles("A")[0] == 4 && asNibbles("A")[1] == 1
-bytes asNibbles(bytesConstRef const& _s);
 
 // Big-endian to/from host endian conversion functions.
 
@@ -141,47 +116,12 @@ inline T fromBigEndian(_In const& _bytes) {
 //     return ret;
 // }
 
-/// Convenience function for toBigEndian.
-/// @returns a byte array just big enough to represent @a _val.
-template <class T>
-inline bytes toCompactBigEndian(T _val, unsigned _min = 0) {
-    int i = 0;
-    for (T v = _val; v; ++i, v >>= 8) {
-    }
-    bytes ret(std::max<unsigned>(_min, unsigned(i)), 0);
-    toBigEndian(_val, ret);
-    return ret;
-}
-inline bytes toCompactBigEndian(byte _val, unsigned _min = 0) { return (_min || _val) ? bytes{_val} : bytes{}; }
-
-/// Convenience function for toBigEndian.
-/// @returns a string just big enough to represent @a _val.
-template <class T>
-inline std::string toCompactBigEndianString(T _val, unsigned _min = 0) {
-    int i = 0;
-    for (T v = _val; v; ++i, v >>= 8) {
-    }
-    std::string ret(std::max<unsigned>(_min, unsigned(i)), '\0');
-    toBigEndian(_val, ret);
-    return ret;
-}
 
 // Algorithms for string and string-like collections.
 
 /// Escapes a string into the C-string representation.
 /// @p _all if true will escape all characters, not just the unprintable ones.
 std::string escaped(std::string const& _s, bool _all = true);
-
-/// Determines the length of the common prefix of the two collections given.
-/// @returns the number of elements both @a _t and @a _u share, in order, at the beginning.
-/// @example commonPrefix("Hello world!", "Hello, world!") == 5
-template <class T, class _U>
-unsigned commonPrefix(T const& _t, _U const& _u) {
-    unsigned s = std::min<unsigned>(_t.size(), _u.size());
-    for (unsigned i = 0;; ++i)
-        if (i == s || _t[i] != _u[i]) return i;
-    return s;
-}
 
 /// Determine bytes required to encode the given integer value. @returns 0 if @a _i is zero.
 template <class T>
@@ -192,24 +132,6 @@ inline unsigned bytesRequired(T _i) {
     return i;
 }
 
-/// Trims a given number of elements from the front of a collection.
-/// Only works for POD element types.
-template <class T>
-void trimFront(T& _t, unsigned _elements) {
-    static_assert(std::is_pod<typename T::value_type>::value, "");
-    memmove(_t.data(), _t.data() + _elements, (_t.size() - _elements) * sizeof(_t[0]));
-    _t.resize(_t.size() - _elements);
-}
-
-/// Pushes an element on to the front of a collection.
-/// Only works for POD element types.
-template <class T, class _U>
-void pushFront(T& _t, _U _e) {
-    static_assert(std::is_pod<typename T::value_type>::value, "");
-    _t.push_back(_e);
-    memmove(_t.data() + 1, _t.data(), (_t.size() - 1) * sizeof(_e));
-    _t[0] = _e;
-}
 
 /// Concatenate the contents of a container onto a vector.
 template <class T, class U>
@@ -250,19 +172,6 @@ std::vector<T> operator+(std::vector<T> _a, U const& _b) {
     return _a += _b;
 }
 
-template <class T, class U>
-std::vector<T> keysOf(std::map<T, U> const& _m) {
-    std::vector<T> ret;
-    for (auto const& i : _m) ret.push_back(i.first);
-    return ret;
-}
-
-template <class T, class U>
-std::vector<T> keysOf(std::unordered_map<T, U> const& _m) {
-    std::vector<T> ret;
-    for (auto const& i : _m) ret.push_back(i.first);
-    return ret;
-}
 
 template <class T, class U>
 std::vector<U> valuesOf(std::map<T, U> const& _m) {
@@ -306,4 +215,4 @@ bool contains(std::map<K, V> const& _map, K const& _k) {
 }
 }  // namespace silkworm::db
 
-#endif  // SILKWORM_COMMONDATA_H
+#endif  // SILKWORM_COMMON_DATA_H

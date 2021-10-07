@@ -6,8 +6,6 @@
 using namespace std;
 using namespace silkworm::db;
 
-bytes RLPNull = silkworm::db::rlp("");
-bytes RLPEmptyList = silkworm::db::rlpList();
 //
 //namespace {
 //
@@ -101,8 +99,7 @@ bool RLP::isInt() const {
         return true;
     else if (n < c_rlpListStart) {
         return m_data[1 + n - c_rlpDataIndLenZero] != 0;
-    } else
-        return false;
+    }
     return false;
 }
 

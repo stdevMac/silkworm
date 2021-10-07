@@ -81,13 +81,3 @@ bytesConstRef silkworm::db::getBytesConstRef(std::vector<uint8_t> ret) {
     bytesConstRef response{values, ret.size()};
     return response;
 }
-
-bytes silkworm::db::asNibbles(bytesConstRef const& _s) {
-    std::vector<uint8_t> ret;
-    ret.reserve(_s.size() * 2);
-    for (auto i : _s) {
-        ret.push_back(i / 16);
-        ret.push_back(i % 16);
-    }
-    return ret;
-}

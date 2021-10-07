@@ -41,17 +41,15 @@ namespace db {
         virtual void insert(Slice _key, Slice _value) = 0;
         virtual void kill(Slice _key) = 0;
 
-        virtual std::unique_ptr<WriteBatchFace> createWriteBatch() const = 0;
         virtual void commit(std::unique_ptr<WriteBatchFace> _batch) = 0;
 
         // A database must implement the `forEach` method that allows the caller
         // to pass in a function `f`, which will be called with the key and value
         // of each record in the database. If `f` returns false, the `forEach`
         // method must return immediately.
-        virtual void forEach(std::function<bool(Slice, Slice)> f) const = 0;
     };
 
-    enum class DatabaseStatus { Ok, NotFound, Corruption, NotSupported, InvalidArgument, IOError, Unknown };
+    enum class DatabaseStatus { NotFound = 1, Corruption = 2, Unknown = 6 };
 
 }  // namespace db
 }  // namespace silkworm
