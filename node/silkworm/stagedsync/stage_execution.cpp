@@ -39,7 +39,7 @@ using namespace silkworm::db;
 
 namespace silkworm::stagedsync {
 
-void insert_witness(mdbx::txn& txn, db::OverlayDB& odb) {
+void insert_witness(mdbx::txn& txn, db::StateCacheDB& odb) {
     (void)odb;
     auto state{db::open_cursor(txn, db::table::kTrieOfAccounts)};
     mdbx::slice value{};
@@ -186,10 +186,10 @@ void insert_witness(mdbx::txn& txn, db::OverlayDB& odb) {
         "48cc449cf7a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7"
         "233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
     state.put(key, &value, MDBX_put_flags_t::MDBX_NOOVERWRITE);
-    //    insert_on_overlay_db(odb);
+    insert_on_overlay_db(odb);
 }
 
-void insert_on_overlay_db(db::OverlayDB& odb) {
+void insert_on_overlay_db(db::StateCacheDB& odb) {
     auto valueBytes = silkworm::db::getBytesConstRefFromHex(
         "f90211a0022dc658c54335e88a66f7366bf842eb4c55f7e24da8c80c08d370ef98fb8e00a07c806b5cc362296990599673685cdf3a2b5a"
         "80c7a67e4301ab1eb135f1f1ad52a0f29bef756e86fb26542808b8950c0899355a20bd6d951f38853dcdbe53b63588a00b8303ac672bc3"
@@ -506,15 +506,20 @@ StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks
     return StageResult::kSuccess;
 }
 
-StageResult execute_block(mdbx::txn& txn, Block& block, OverlayDB& odb) {
+StageResult execute_block(mdbx::txn& txn, Block& block, StateCacheDB& odb, h256 root_hash) {
+
     TransactionManager tm{txn};
     const auto config{db::read_chain_config(*tm)};
     const auto storage_mode{db::read_storage_mode(*tm)};
     (void)odb;
-    db::Buffer buffer{txn, 0, block.header.number};
+    OverlayState buffer{odb};
+
+    buffer.debug_tree();
+    buffer.set_root(root_hash);
     auto block_num{block.header.number};
     AnalysisCache analysis_cache;
     ExecutionStatePool state_pool;
+
     std::vector<Receipt> receipts;
 
     auto consensus_engine{consensus::engine_factory(*config)};

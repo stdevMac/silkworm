@@ -25,8 +25,8 @@ StateCacheDB& StateCacheDB::operator=(StateCacheDB const& _c) {
 }
 
 std::string StateCacheDB::lookup(h256 const& _h) const {
-    //    auto t = m_main.size();
-    auto it = m_main.find(_h.hex());
+    std::string key = _h.hex();
+    auto it = m_main.find(key);
     if (it != m_main.end()) {
         return it->second.first;
     }
@@ -34,20 +34,26 @@ std::string StateCacheDB::lookup(h256 const& _h) const {
 }
 
 bool StateCacheDB::exists(h256 const& _h) const {
-    auto it = m_main.find(_h.hex());
+    std::string key = _h.hex();
+    auto it = m_main.find(key);
     if (it != m_main.end()) return true;
     return false;
 }
 
 void StateCacheDB::insert(h256 const& _h, bytesConstRef _v) {
-    auto it = m_main.find(_h.hex());
+    std::string key = _h.hex();
+    auto it = m_main.find(key);
     if (it != m_main.end()) {
         it->second.first = _v.toString();
         it->second.second++;
     } else
-        m_main[_h.hex()] = make_pair(_v.toString(), 1);
-    auto t = m_main.size();
-    (void)t;
+        m_main[key] = make_pair(_v.toString(), 1);
+    it = m_main.find(key);
+    if (it == m_main.end()) {
+        auto r = 0;
+        auto p = (1)/(r);
+        (void)p;
+    }
 }
 
 bool StateCacheDB::kill(h256 const& _h) {

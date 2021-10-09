@@ -22,6 +22,7 @@
 
 #include <silkworm/consensus/engine.hpp>
 #include <silkworm/execution/evm.hpp>
+#include <silkworm/state/OverlayState.h>
 #include <silkworm/state/state.hpp>
 #include <silkworm/types/block.hpp>
 #include <silkworm/types/receipt.hpp>

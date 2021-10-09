@@ -90,8 +90,8 @@ std::optional<Account> OverlayState::read_account(const evmc::address& address) 
     if (it != m_cache.end()) return it->second;
 
     if (m_nonExistingAccountsCache.count(address)) return Account{};
-
-    Address address1{to_hex(address)};
+    auto t = to_hex(address);
+    Address address1{t};
 
     // Populate basic info.
     string stateBack = m_state.at(address1);
@@ -138,5 +138,9 @@ uint64_t OverlayState::previous_incarnation(const evmc::address& address) const 
 }
 
 void OverlayState::unwind_state_changes(uint64_t) {}
+//
+//void OverlayState::insert_witness() {
+//    m_state.insert()
+//}
 
 }  // namespace silkworm

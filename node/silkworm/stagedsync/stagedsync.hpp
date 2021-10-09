@@ -25,7 +25,7 @@
 #include <silkworm/db/tables.hpp>
 #include <silkworm/stagedsync/transaction_manager.hpp>
 #include <silkworm/stagedsync/util.hpp>
-#include <silkworm/db/OverlayDB.h>
+#include <silkworm/db/StateCacheDB.h>
 
 namespace silkworm::stagedsync {
 
@@ -55,9 +55,9 @@ inline StageResult stage_execution(TransactionManager& txn, const std::filesyste
     return stage_execution(txn, etl_path, kDefaultBatchSize, prune_from);
 }
 StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks_rlp);
-StageResult execute_block(mdbx::txn& txn, Block& block, db::OverlayDB& odb);
-void insert_witness(mdbx::txn& txn, silkworm::db::OverlayDB& odb);
-void insert_on_overlay_db(db::OverlayDB& odb);
+StageResult execute_block(mdbx::txn& txn, Block& block, db::StateCacheDB& odb, db::h256 root_hash);
+void insert_witness(mdbx::txn& txn, silkworm::db::StateCacheDB& odb);
+void insert_on_overlay_db(db::StateCacheDB& odb);
 
 /* HashState Promotion Functions*/
 

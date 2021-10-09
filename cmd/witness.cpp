@@ -3867,12 +3867,13 @@ int main(int argc, char* argv[]) {
         ByteView in{rlp_bytes};
         Block bb{};
         auto db{std::unique_ptr<db::DatabaseFace>(new db::MemoryDB())};
-        db::OverlayDB odb(std::move(db));
-        stagedsync::insert_witness(txn, odb);
-
+        //        db::OverlayDB odb(std::move(db));
+        db::StateCacheDB stateCacheDb{};
+        stagedsync::insert_witness(txn, stateCacheDb);
         (void)rlp::decode(in, bb);
         bb.recover_senders();
-        auto execution_result{stagedsync::execute_block(txn, bb, odb)};
+        auto execution_result{stagedsync::execute_block(
+            txn, bb, stateCacheDb, db::h256{"0xf1da69409a52822fb0e3f78c0ea402181abdb603d840703e4bf8c12370ec6643"})};
 
         if (execution_result == silkworm::stagedsync::StageResult::kSuccess) {
             SILKWORM_LOG(LogLevel::Info) << "The block process fine" << std::endl;

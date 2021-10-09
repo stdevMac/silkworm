@@ -185,7 +185,7 @@ class GenericTrieDB {
     h256Hash leftOvers(std::ostream* _out = nullptr) const {
         h256Hash k = m_db->keys();
         descendKey(m_root, k, false, _out);
-        return k;
+          return k;
     }
 
     /// Used for debugging, scans the whole trie.
