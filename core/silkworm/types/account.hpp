@@ -35,6 +35,11 @@ struct Account {
     evmc::bytes32 code_hash{kEmptyHash};
     uint64_t incarnation{0};
 
+    Account() {}
+
+    Account(uint64_t _nonce, intx::uint256 _balance, evmc::bytes32 _code_hash, uint64_t _incarnation)
+        : nonce(_nonce), balance(_balance), code_hash(_code_hash), incarnation(_incarnation) {}
+
     // Erigon (*Account)EncodeForStorage
     Bytes encode_for_storage(bool omit_code_hash = false) const;
 
@@ -46,7 +51,7 @@ struct Account {
 
 bool operator==(const Account& a, const Account& b);
 
- /*
+/*
  * Extract the incarnation from an encoded account object without fully decoding it.
  */
 std::pair<uint64_t, rlp::DecodingResult> extract_incarnation(ByteView);

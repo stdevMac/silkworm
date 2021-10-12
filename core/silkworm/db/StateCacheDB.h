@@ -27,7 +27,7 @@ class StateCacheDB {
 
     virtual std::string lookup(silkworm::db::h256 const& _h) const;
     virtual bool exists(silkworm::db::h256 const& _h) const;
-    virtual void insert(silkworm::db::h256 const& _h, silkworm::db::bytesConstRef _v);
+    virtual void insert(silkworm::db::h256 const& _h, std::string _v);
     virtual bool kill(silkworm::db::h256 const& _h);
     void purge();
 

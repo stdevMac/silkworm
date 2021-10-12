@@ -65,7 +65,7 @@ class RLP {
     explicit RLP(bytesConstRef _d, Strictness _s = VeryStrict);
 
     /// Construct a node of value given in the bytes.
-    explicit RLP(bytes const& _d, Strictness _s = VeryStrict) : RLP(silkworm::db::getBytesConstRef(_d), _s) {}
+    explicit RLP(bytes const& _d, Strictness _s = VeryStrict) : RLP(bytesConstRef{&_d}, _s) {}
 
     /// Construct a node to read RLP data in the bytes given.
     RLP(byte const* _b, unsigned _s, Strictness _st = VeryStrict) : RLP(bytesConstRef(_b, _s), _st) {}
@@ -97,11 +97,18 @@ class RLP {
 
     /// @returns the number of items in the list, or zero if it isn't a list.
     size_t itemCount() const { return isList() ? items() : 0; }
-    size_t itemCountStrict() const { return items(); }
+    size_t itemCountStrict() const {
+        if (!isList()) (void)c_rlpListStart;
+        return items();
+    }
 
     /// @returns the number of bytes in the data, or zero if it isn't data.
     size_t size() const { return isData() ? length() : 0; }
-    size_t sizeStrict() const { return length(); }
+    size_t sizeStrict() const {
+        if (!isData()) (void)c_rlpListStart;
+
+        return length();
+    }
 
     /// Equality operators; does best-effort conversion and checks for equality.
     bool operator==(char const* _s) const { return isData() && toString() == _s; }
@@ -118,7 +125,7 @@ class RLP {
     }
     bool operator==(unsigned const& _i) const { return isInt() && toInt<unsigned>() == _i; }
     bool operator!=(unsigned const& _i) const { return isInt() && toInt<unsigned>() != _i; }
-    //    bool operator==(u256 const& _i) const { return isInt() && toInt<u256>() == _i; }
+    //    bool operator==(silkworm::db::u256 const& _i) const { return isInt() && toInt<u256>() == _i; }
     //    bool operator!=(u256 const& _i) const { return isInt() && toInt<u256>() != _i; }
     //    bool operator==(bigint const& _i) const { return isInt() && toInt<bigint>() == _i; }
     //    bool operator!=(bigint const& _i) const { return isInt() && toInt<bigint>() != _i; }
@@ -199,25 +206,33 @@ class RLP {
     /// Converts to bytearray. @returns the empty byte array if not a string.
     bytes toBytes(int _flags = LaissezFaire) const {
         if (!isData()) {
-            return {};
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+
+            else
+                return bytes();
         }
-        (void)_flags;
-        return {payload().data(), payload().data() + length()};
+        return bytes(payload().data(), payload().data() + length());
     }
     /// Converts to bytearray. @returns the empty byte array if not a string.
     bytesConstRef toBytesConstRef(int _flags = LaissezFaire) const {
         if (!isData()) {
-            return {};
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+
+            else
+                return bytesConstRef();
         }
-        (void)_flags;
         return payload().cropped(0, length());
     }
     /// Converts to string. @returns the empty string if not a string.
     std::string toString(int _flags = LaissezFaire) const {
         if (!isData()) {
-            return {};
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+            else
+                return std::string();
         }
-        (void)_flags;
         return payload().cropped(0, length()).toString();
     }
     /// Converts to string. @throws BadCast if not a string.
@@ -229,7 +244,8 @@ class RLP {
         if (isList()) {
             ret.reserve(itemCount());
             for (auto const& i : *this) ret.push_back(i.convert<T>(_flags));
-        }
+        } else if (_flags & ThrowOnFail)
+            (void)c_rlpListStart;
         return ret;
     }
 
@@ -238,6 +254,8 @@ class RLP {
         std::set<T> ret;
         if (isList())
             for (auto const& i : *this) ret.insert(i.convert<T>(_flags));
+        else if (_flags & ThrowOnFail)
+            (void)c_rlpListStart;
         return ret;
     }
 
@@ -246,6 +264,8 @@ class RLP {
         std::unordered_set<T> ret;
         if (isList())
             for (auto const& i : *this) ret.insert(i.convert<T>(_flags));
+        else if (_flags & ThrowOnFail)
+            (void)c_rlpListStart;
         return ret;
     }
 
@@ -253,7 +273,10 @@ class RLP {
     std::pair<T, U> toPair(int _flags = Strict) const {
         std::pair<T, U> ret;
         if (itemCountStrict() != 2) {
-            return ret;
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+            else
+                return ret;
         }
         ret.first = (*this)[0].convert<T>(_flags);
         ret.second = (*this)[1].convert<U>(_flags);
@@ -263,7 +286,10 @@ class RLP {
     template <class T, size_t N>
     std::array<T, N> toArray(int _flags = LaissezFaire) const {
         if (itemCount() != N) {
-            return std::array<T, N>();
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+            else
+                return std::array<T, N>();
         }
         std::array<T, N> ret;
         for (size_t i = 0; i < N; ++i) ret[i] = operator[](i).convert<T>(_flags);
@@ -275,12 +301,18 @@ class RLP {
     _T toInt(int _flags = Strict) const {
         requireGood();
         if ((!isInt() && !(_flags & AllowNonCanon)) || isList() || isNull()) {
-            return {};
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+            else
+                return {};
         }
 
         auto p = payload();
         if (p.size() > intTraits<_T>::maxSize && (_flags & FailIfTooBig)) {
-            if (_flags & ThrowOnFail) return {};
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+            else
+                return {};
         }
 
         return fromBigEndian<_T>(p);
@@ -288,6 +320,8 @@ class RLP {
 
     int64_t toPositiveInt64(int _flags = Strict) const {
         int64_t i = toInt<int64_t>(_flags);
+        if ((_flags & ThrowOnFail) && i < 0) (void)c_rlpListStart;
+
         return i;
     }
 
@@ -297,7 +331,10 @@ class RLP {
         auto p = payload();
         auto l = p.size();
         if (!isData() || (l > _N::size && (_flags & FailIfTooBig)) || (l < _N::size && (_flags & FailIfTooSmall))) {
-            return {};
+            if (_flags & ThrowOnFail)
+                (void)c_rlpListStart;
+            else
+                return _N();
         }
 
         _N ret;
@@ -309,6 +346,7 @@ class RLP {
     /// @returns the data payload. Valid for all types.
     bytesConstRef payload() const {
         auto l = length();
+        if (l > m_data.size()) (void)c_rlpListStart;
         return m_data.cropped(payloadOffset(), l);
     }
 
@@ -493,12 +531,14 @@ class RLPStream {
     /// Appends a list.
     RLPStream& appendList(size_t _items);
     RLPStream& appendList(bytesConstRef _rlp);
-    //    RLPStream& appendList(bytes const& _rlp) { return appendList(&_rlp); }
-    //    RLPStream& appendList(RLPStream const& _s) { return appendList(&_s.out()); }
+    RLPStream& appendList(bytes const& _rlp) { return appendList(bytesConstRef{&_rlp}); }
+    RLPStream& appendList(RLPStream const& _s) { return appendList(bytesConstRef{&_s.out()}); }
 
     /// Appends raw (pre-serialised) RLP data. Use with caution.
     RLPStream& appendRaw(bytesConstRef _rlp, size_t _itemCount = 1);
-    //    RLPStream& appendRaw(bytes const& _rlp, size_t _itemCount = 1) { return appendRaw(&_rlp, _itemCount); }
+    RLPStream& appendRaw(bytes const& _rlp, size_t _itemCount = 1) {
+        return appendRaw(bytesConstRef{&_rlp}, _itemCount);
+    }
 
     /// Shift operators for appending data items.
     template <class T>
@@ -514,22 +554,19 @@ class RLPStream {
 
     /// Read the byte stream.
     bytes const& out() const {
-        //        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not
-        //        empty"));
+        if (!m_listStack.empty()) (void)c_rlpListStart;
         return m_out;
     }
 
     /// Invalidate the object and steal the output byte stream.
     bytes&& invalidate() {
-        //        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not
-        //        empty"));
+        if (!m_listStack.empty()) (void)c_rlpListStart;
         return std::move(m_out);
     }
 
     /// Swap the contents of the output stream out for some other byte array.
     void swapOut(bytes& _dest) {
-        //        if (!m_listStack.empty()) BOOST_THROW_EXCEPTION(RLPException() << errinfo_comment("listStack is not
-        //        empty"));
+        if (!m_listStack.empty()) (void)c_rlpListStart;
         swap(m_out, _dest);
     }
 
@@ -588,5 +625,4 @@ extern bytes RLPEmptyList;
 std::ostream& operator<<(std::ostream& _out, silkworm::db::RLP const& _d);
 
 }  // namespace silkworm::db
-
-#endif  // SILKWORM_RLP_H
+#endif

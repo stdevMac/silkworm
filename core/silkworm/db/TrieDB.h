@@ -19,6 +19,7 @@ namespace silkworm::db {
 // struct InvalidTrie : virtual dev::Exception {};
 
 enum class Verification { Skip, Normal };
+h256 const EmptyTrie = sha3(rlp(""));
 
 /**
  * @brief Merkle Patricia Tree "Trie": a modifed base-16 Radix tree.
@@ -57,22 +58,22 @@ class GenericTrieDB {
         h256 new_root = forceInsertNode(silkworm::db::rlp(""));
         setRoot(new_root);
         assert(new_root.hex() == m_root.hex());
+        m_root_hash = m_root.hex();
+        auto p = m_root.hex();
+        (void)p;
         assert(node(m_root).size());
     }
 
     void setRoot(h256 _root, Verification _v = Verification::Normal) {
-        //        auto t=FixedHash<32>();
-        m_root = h256{silkworm::db::fromHex(_root.hex())};  //        m_root = _root;
-                                                            //        copy(_root.begin(),_root.end() , m_root->begin());
+        m_root = _root;
         (void)_v;
-        //        auto r = _root.abridged();
-        //        (void)r;
-        //        if (_v == Verification::Normal) {
-        //            if (m_root == sha3(rlp("")) && !m_db->exists(m_root))
-        //                init();
-        //        }
-        //        if (_v == Verification::Normal) {
-        //        }
+        auto r = _root.hex();
+        (void)r;
+        if (_v == Verification::Normal) {
+            if (m_root == EmptyTrie && !m_db->exists(m_root)) init();
+        }
+        if (_v == Verification::Normal) {
+        }
     }
 
     /// True if the trie is uninitialised (i.e. that the Database doesn't contain the root node).
@@ -143,7 +144,7 @@ class GenericTrieDB {
     iterator begin() const { return iterator(this); }
     iterator end() const { return iterator(); }
 
-     iterator lower_bound(bytesConstRef _key) const { return iterator(this, _key); }
+    iterator lower_bound(bytesConstRef _key) const { return iterator(this, _key); }
 
     /// Used for debugging, scans the whole trie.
     void descendKey(h256 const& _k, h256Hash& _keyMask, bool _wasExt, std::ostream* _out, int _indent = 0) const {
@@ -185,7 +186,7 @@ class GenericTrieDB {
     h256Hash leftOvers(std::ostream* _out = nullptr) const {
         h256Hash k = m_db->keys();
         descendKey(m_root, k, false, _out);
-          return k;
+        return k;
     }
 
     /// Used for debugging, scans the whole trie.
@@ -254,7 +255,10 @@ class GenericTrieDB {
     [[nodiscard]] bool isTwoItemNode(RLP const& _n) const;
     [[nodiscard]] std::string deref(RLP const& _n) const;
 
-    [[nodiscard]] std::string node(h256 const& _h) const { return m_db->lookup(_h); }
+    [[nodiscard]] std::string node(h256 const& _h) const {
+        auto l{m_db->lookup(_h)};
+        return l;
+    }
 
     // These are low-level node insertion functions that just go straight through into the Database.
     //    h256 forceInsertNode(bytesConstRef _v) {
@@ -267,7 +271,7 @@ class GenericTrieDB {
         forceInsertNode(h, bytesConstRef(&_v));
         return h;
     }
-    void forceInsertNode(h256 const& _h, bytesConstRef _v) { m_db->insert(_h, _v); }
+    void forceInsertNode(h256 const& _h, bytesConstRef _v) { m_db->insert(_h, _v.toString()); }
     void forceKillNode(h256 const& _h) { m_db->kill(_h); }
 
     // This are semantically-aware node insertion functions that only kills when the node's
@@ -282,6 +286,7 @@ class GenericTrieDB {
     }
 
     h256 m_root;
+    std::string m_root_hash;
     Database* m_db = nullptr;
 };
 
@@ -633,11 +638,16 @@ void GenericTrieDB<DB>::insert(bytesConstRef _key, bytesConstRef _value) {
     // So, if it's less than 32 (and thus should have been deleted but wasn't) then we delete it here.
     if (rootValue.size() < 32) forceKillNode(m_root);
     m_root = forceInsertNode(&b);
+    m_root_hash = m_root.hex();
 }
 
 template <class DB>
 std::string GenericTrieDB<DB>::at(bytesConstRef _key) const {
-    return atAux(RLP(node(m_root)), _key);
+    auto p = m_root.hex();
+    (void)p;
+    auto node_value{fromHex(node(m_root))};
+    //    std::vector<uint8_t> vec(node_value.begin(), node_value.end());
+    return atAux(RLP(node_value), _key);
 }
 
 template <class DB>
@@ -654,7 +664,12 @@ std::string GenericTrieDB<DB>::atAux(RLP const& _here, NibbleSlice _key) const {
             return _here[1].toString();
         else if (_key.contains(k) && !isLeaf(_here))
             // not yet at leaf and it might yet be us. onwards...
-            return atAux(_here[1].isList() ? _here[1] : RLP(node(_here[1].toHash<h256>())), _key.mid(k.size()));
+            if (_here[1].isList())
+                return atAux(_here[1], _key.mid(k.size()));
+            else {
+                auto node_value{fromHex(node(_here[1].toHash<h256>()))};
+                return atAux(RLP(node_value), _key.mid(k.size()));
+            }
         else
             // not us.
             return {};
@@ -663,8 +678,14 @@ std::string GenericTrieDB<DB>::atAux(RLP const& _here, NibbleSlice _key) const {
         auto n = _here[_key[0]];
         if (n.isEmpty())
             return {};
-        else
-            return atAux(n.isList() ? n : RLP(node(n.toHash<h256>())), _key.mid(1));
+        else {
+            if (n.isList())
+                return atAux(n, _key.mid(1));
+            else {
+                auto node_value{fromHex(node(n.toHash<h256>()))};
+                return atAux(RLP(node_value), _key.mid(1));
+            }
+        }
     }
 }
 

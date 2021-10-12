@@ -32,6 +32,7 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 #include <silkworm/db/OverlayDB.h>
 #include <silkworm/db/buffer.hpp>
 #include <silkworm/db/db.h>
+#include <silkworm/db/FixedHash.h>
 #include <silkworm/db/mdbx.hpp>
 #include <silkworm/db/tables.hpp>
 #include <silkworm/stagedsync/stagedsync.hpp>
@@ -3866,14 +3867,19 @@ int main(int argc, char* argv[]) {
         Bytes rlp_bytes{*from_hex(rlp_hex)};
         ByteView in{rlp_bytes};
         Block bb{};
-        auto db{std::unique_ptr<db::DatabaseFace>(new db::MemoryDB())};
-        //        db::OverlayDB odb(std::move(db));
+        Bytes rlp2{*from_hex(rlps[0])};
+        ByteView in2{rlp2};
+        Block b_trie{};
         db::StateCacheDB stateCacheDb{};
         stagedsync::insert_witness(txn, stateCacheDb);
         (void)rlp::decode(in, bb);
+        (void)rlp::decode(in2, b_trie);
         bb.recover_senders();
+        assert(bb.header.number == b_trie.header.number + 1);
+        auto y{to_hex(b_trie.header.state_root)};
+        (void)y;
         auto execution_result{stagedsync::execute_block(
-            txn, bb, stateCacheDb, db::h256{"0xf1da69409a52822fb0e3f78c0ea402181abdb603d840703e4bf8c12370ec6643"})};
+            txn, bb, stateCacheDb, db::h256{y})};
 
         if (execution_result == silkworm::stagedsync::StageResult::kSuccess) {
             SILKWORM_LOG(LogLevel::Info) << "The block process fine" << std::endl;

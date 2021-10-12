@@ -97,11 +97,25 @@ std::optional<Account> OverlayState::read_account(const evmc::address& address) 
     string stateBack = m_state.at(address1);
     if (stateBack.empty()) {
         m_nonExistingAccountsCache.insert(address);
-        return Account{};
+        return {};
     }
-    auto [account, result]{decode_account_from_storage(ByteView{*from_hex(stateBack)})};
-    (void)result;
-    return account;
+    RLP state(stateBack);
+    auto const nonce = state[0].toInt<uint64_t>();
+    auto const balance = state[1].toInt<intx::uint256>();
+    //    auto const storageRoot = state[2].toHash<h256>();
+    auto const codeHash = state[3].toHash<h256>();
+    auto p{codeHash.hex()};
+    (void)p;
+    // version is 0 if absent from RLP
+
+    evmc::bytes32 c{to_bytes32(from_hex(codeHash.hex()).value())};
+
+    auto const version = state[4] ? state[4].toInt<uint64_t>() : 0;
+    Account a{nonce, balance, c, version};
+
+    //    auto [account, result]{decode_account_from_storage(ByteView{*from_hex(stateBack)})};
+    //    (void)result;
+    return a;
 }
 
 ByteView OverlayState::read_code(const evmc::bytes32& code_hash) const noexcept {
@@ -139,7 +153,7 @@ uint64_t OverlayState::previous_incarnation(const evmc::address& address) const 
 
 void OverlayState::unwind_state_changes(uint64_t) {}
 //
-//void OverlayState::insert_witness() {
+// void OverlayState::insert_witness() {
 //    m_state.insert()
 //}
 

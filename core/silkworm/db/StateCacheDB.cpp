@@ -40,18 +40,18 @@ bool StateCacheDB::exists(h256 const& _h) const {
     return false;
 }
 
-void StateCacheDB::insert(h256 const& _h, bytesConstRef _v) {
+void StateCacheDB::insert(h256 const& _h, std::string _v) {
     std::string key = _h.hex();
     auto it = m_main.find(key);
     if (it != m_main.end()) {
-        it->second.first = _v.toString();
+        it->second.first = _v;
         it->second.second++;
     } else
-        m_main[key] = make_pair(_v.toString(), 1);
+        m_main[key] = make_pair(_v, 1);
     it = m_main.find(key);
     if (it == m_main.end()) {
         auto r = 0;
-        auto p = (1)/(r);
+        auto p = (1) / (r);
         (void)p;
     }
 }
