@@ -279,7 +279,8 @@ std::optional<ByteView> read_code(mdbx::txn& txn, const evmc::bytes32& code_hash
 }
 
 // Erigon FindByHistory for account
-//static std::optional<ByteView> historical_account(mdbx::txn& txn, const evmc::address& address, uint64_t block_number) {
+// static std::optional<ByteView> historical_account(mdbx::txn& txn, const evmc::address& address, uint64_t
+// block_number) {
 //    auto history_table{db::open_cursor(txn, table::kAccountHistory)};
 //    const Bytes history_key{account_history_key(address, block_number)};
 //    const auto data{history_table.lower_bound(to_slice(history_key), /*throw_notfound=*/false)};
@@ -326,7 +327,7 @@ static std::optional<ByteView> historical_storage(mdbx::txn& txn, const evmc::ad
 }
 
 std::optional<Account> read_account(mdbx::txn& txn, const evmc::address& address, std::optional<uint64_t> block_num) {
-//    (void)block_num;
+    //    (void)block_num;
     etl::Collector collector{0};
     trie::DbTrieLoader loader{txn, collector, collector};
     return loader.get_account(address, BlockNum{block_num.value()});
@@ -425,6 +426,18 @@ StorageChanges read_storage_changes(mdbx::txn& txn, uint64_t block_num) {
     return changes;
 }
 
+std::optional<ChainConfig> read_mainnet_config() {
+    auto data{
+        "{\"ChainName\":\"mainnet\",\"chainId\":1,\"homesteadBlock\":1150000,\"daoForkBlock\":1920000,"
+        "\"daoForkSupport\":true,\"eip150Block\":2463000,\"eip150Hash\":"
+        "\"0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0\",\"eip155Block\":2675000,"
+        "\"eip158Block\":2675000,\"byzantiumBlock\":4370000,\"constantinopleBlock\":7280000,\"petersburgBlock\":"
+        "7280000,\"istanbulBlock\":9069000,\"muirGlacierBlock\":9200000,\"berlinBlock\":12244000,\"londonBlock\":"
+        "12965000,\"ethash\":{}}"};
+    const auto json = nlohmann::json::parse(data, nullptr, false);
+    return ChainConfig::from_json(json);
+}
+
 std::optional<ChainConfig> read_chain_config(mdbx::txn& txn) {
     auto src{db::open_cursor(txn, table::kCanonicalHashes)};
     auto data{src.find(to_slice(block_key(0)), /*throw_notfound=*/false)};
@@ -438,7 +451,8 @@ std::optional<ChainConfig> read_chain_config(mdbx::txn& txn) {
     if (!data) {
         return std::nullopt;
     }
-
+    auto p{data.value.as_string()};
+    (void)p;
     // https://github.com/nlohmann/json/issues/2204
     const auto json = nlohmann::json::parse(data.value.as_string(), nullptr, false);
     return ChainConfig::from_json(json);

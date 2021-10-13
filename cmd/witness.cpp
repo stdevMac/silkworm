@@ -23,18 +23,19 @@ At the moment only full regeneration is supported, not incremental update.
 The previous Generate Hashed State Stage must be performed prior to calling this executable.
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <CLI/CLI.hpp>
 #include <magic_enum.hpp>
 
 #include <silkworm/common/directories.hpp>
 #include <silkworm/common/log.hpp>
-#include <silkworm/db/MemoryDB.h>
-#include <silkworm/db/OverlayDB.h>
+#include <silkworm/db/FixedHash.h>
 #include <silkworm/db/buffer.hpp>
 #include <silkworm/db/db.h>
-#include <silkworm/db/FixedHash.h>
 #include <silkworm/db/mdbx.hpp>
-#include <silkworm/db/tables.hpp>
 #include <silkworm/stagedsync/stagedsync.hpp>
 
 using namespace silkworm;
@@ -45,22 +46,30 @@ int main(int argc, char* argv[]) {
     namespace fs = std::filesystem;
     using namespace silkworm;
 
-    std::string chain_data{DataDirectory{}.chaindata().path().string()};
-
-    app.add_option("--chaindata", chain_data, "Path to a database populated by Erigon", true)
-        ->check(CLI::ExistingDirectory);
+    //    std::string chain_data{DataDirectory{}.chaindata().path().string()};
+    //    --chaindata "/Users/maceo/.local/share/erigon/chaindata"
+    //    app.add_option("--chaindata", chain_data, "Path to a database populated by Erigon", true)
+    //        ->check(CLI::ExistingDirectory);
 
     CLI11_PARSE(app, argc, argv);
 
-    SILKWORM_LOG(LogLevel::Info) << "Regenerating account & storage tries. Database: " << chain_data << std::endl;
+    SILKWORM_LOG(LogLevel::Info) << "Regenerating account & storage tries." << std::endl;
+
+    const char* target = getenv("MYST_TARGET");
+    if (!target) {
+        printf("This is an unknown environment\n");
+        return 1;
+    }
+    if (strcmp(target, "sgx") != 0) {
+        printf("I environment isn't protected with sgx\n");
+        return 1;
+    }
+
+    printf("Running inside SGX!  \nNow, for secrets!\n");
 
     try {
-        auto data_dir{DataDirectory::from_chaindata(chain_data)};
-        data_dir.deploy();
-        db::EnvConfig db_config{data_dir.chaindata().path().string()};
-        auto env{db::open_env(db_config)};
-        auto txn{env.start_write()};
-        db_config.create = false;
+        // TODO Clean use of txn
+        mdbx::txn_managed txn{};
         std::vector<std::string> rlps{
             "f9021af90215a0abec7af08dfaf663ff46e645eab70a168e82a03a227cbcaccba9e455d1e42522a01dcc4de8de"
             "c75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d493479452bc44d5378309ee2abf1539bf71de1b7d"
@@ -3840,12 +3849,12 @@ int main(int argc, char* argv[]) {
             "7578a0deb7267655138718192a0b92a1f1a807c3ce11e78deb75ffb5d4cfa4fe886be988ca756fd7f97a6521c0"
             "c0"};
 
-        auto result{stagedsync::insert_blocks(txn, rlps)};
-        if (result == silkworm::stagedsync::StageResult::kSuccess) {
-            SILKWORM_LOG(LogLevel::Info) << "Inserted all blocks" << std::endl;
-        } else {
-            SILKWORM_LOG(LogLevel::Info) << "Error inserting blocks" << std::endl;
-        }
+        //        auto result{stagedsync::insert_blocks(txn, rlps)};
+        //        if (result == silkworm::stagedsync::StageResult::kSuccess) {
+        //            SILKWORM_LOG(LogLevel::Info) << "Inserted all blocks" << std::endl;
+        //        } else {
+        //            SILKWORM_LOG(LogLevel::Info) << "Error inserting blocks" << std::endl;
+        //        }
 
         const char* rlp_hex{
             "f9028bf90215a0f0c9cd8872832cf48c27c57a7920d26640c2c1b4234ce14f18ccb2ad2e96376fa01dcc4de8de"
@@ -3878,16 +3887,13 @@ int main(int argc, char* argv[]) {
         assert(bb.header.number == b_trie.header.number + 1);
         auto y{to_hex(b_trie.header.state_root)};
         (void)y;
-        auto execution_result{stagedsync::execute_block(
-            txn, bb, stateCacheDb, db::h256{y})};
+        auto execution_result{stagedsync::execute_block(txn, bb, stateCacheDb, db::h256{y})};
 
         if (execution_result == silkworm::stagedsync::StageResult::kSuccess) {
             SILKWORM_LOG(LogLevel::Info) << "The block process fine" << std::endl;
         } else {
             SILKWORM_LOG(LogLevel::Error) << "Error processing block: " << bb.header.number << std::endl;
         }
-
-        txn.commit();
 
     } catch (const std::exception& ex) {
         SILKWORM_LOG(LogLevel::Error) << ex.what() << std::endl;
