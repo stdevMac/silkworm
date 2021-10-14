@@ -5,7 +5,6 @@ ADD . /src
 RUN mkdir -p /src/build \
  && cd /src/build \
  && cmake .. \
- && cmake --build . \
  && make
 
 # stage2 get binaries
