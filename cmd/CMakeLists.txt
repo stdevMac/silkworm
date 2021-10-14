@@ -55,8 +55,8 @@ if(NOT SILKWORM_CORE_ONLY)
   add_executable(check_pow check_pow.cpp)
   target_link_libraries(check_pow PRIVATE silkworm_node CLI11::CLI11)
 
-  add_executable(toolbox toolbox.cpp)
-  target_link_libraries(toolbox PRIVATE silkworm_node CLI11::CLI11)
+  #add_executable(toolbox toolbox.cpp)
+  #target_link_libraries(toolbox PRIVATE silkworm_node CLI11::CLI11)
 
   add_executable(genesistool genesistool.cpp)
   target_link_libraries(genesistool PRIVATE CLI11::CLI11)
@@ -106,8 +106,8 @@ if(NOT SILKWORM_CORE_ONLY)
   add_executable(log_index log_index.cpp)
   target_link_libraries(log_index PRIVATE silkworm_node cborcpp CLI11::CLI11)
 
-  add_executable(trie trie.cpp)
-  target_link_libraries(trie PRIVATE silkworm_node CLI11::CLI11)
+  #add_executable(trie trie.cpp)
+  #target_link_libraries(trie PRIVATE silkworm_node CLI11::CLI11)
 
   add_executable(download_headers download_headers.cpp)
   target_link_libraries(download_headers PRIVATE silkworm_node silkworm_core CLI11::CLI11)
