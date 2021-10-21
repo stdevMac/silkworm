@@ -23,12 +23,21 @@ At the moment only full regeneration is supported, not incremental update.
 The previous Generate Hashed State Stage must be performed prior to calling this executable.
 */
 
+#include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <CLI/CLI.hpp>
+#include <arpa/inet.h>
 #include <magic_enum.hpp>
+#include <netinet/in.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/x509v3.h>
+#include <sys/socket.h>
 
 #include <silkworm/common/directories.hpp>
 #include <silkworm/common/log.hpp>
@@ -37,6 +46,12 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 #include <silkworm/db/db.h>
 #include <silkworm/db/mdbx.hpp>
 #include <silkworm/stagedsync/stagedsync.hpp>
+
+#include "client.h"
+
+#define ADDRESS "localhost"
+#define CA_PATH NULL
+#define CA_FILE "certificate/certificate.pem"
 
 using namespace silkworm;
 
@@ -66,6 +81,22 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Running inside SGX!  \nNow, for secrets!\n");
+    const char* rlp_hex{
+        "f9028bf90215a0f0c9cd8872832cf48c27c57a7920d26640c2c1b4234ce14f18ccb2ad2e96376fa01dcc4de8de"
+        "c75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347941dcb8d1f0fcc8cbc8c2d76528e877f915e"
+        "299fbea0c040dd006d1fc49806f17d280549d3791d90e29c84d7ba32bc5a51c351a125ffa0f4e9592aba4dc589"
+        "1a3c875c8b4da47fcc73e4166218d90fd9fc4459a3d2ce60a07fe394c2d0a4e5b8f961c4c569b5fe93b1eb37e6"
+        "62220b64e0868f305482330fb90100000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        "008606157a98888983035a51832fefd88252088455f332d596d583010103844765746885676f312e35856c696e"
+        "7578a0c80a206814881ca8dd651f28c87548dce58a11f73494c76db0e8ef9b5f56fc208849d7ea07e14e613af8"
+        "70f86e8201ef850ba43b7400825208945da8f7f0c6a4561d2d8ae1491a0d3d8efc837957881b8528be98dba400"
+        "801ca059ba32680e2f742337bfcae2cb534928c455584b62770c812e39e5c79f6e0b3ea0252748ecd088f0272a"
+        "d5a4c78e543186b60b7ffcc9b64c4121802ccd109b9428c0"};
 
     try {
         // TODO Clean use of txn
@@ -3856,23 +3887,6 @@ int main(int argc, char* argv[]) {
         //            SILKWORM_LOG(LogLevel::Info) << "Error inserting blocks" << std::endl;
         //        }
 
-        const char* rlp_hex{
-            "f9028bf90215a0f0c9cd8872832cf48c27c57a7920d26640c2c1b4234ce14f18ccb2ad2e96376fa01dcc4de8de"
-            "c75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347941dcb8d1f0fcc8cbc8c2d76528e877f915e"
-            "299fbea0c040dd006d1fc49806f17d280549d3791d90e29c84d7ba32bc5a51c351a125ffa0f4e9592aba4dc589"
-            "1a3c875c8b4da47fcc73e4166218d90fd9fc4459a3d2ce60a07fe394c2d0a4e5b8f961c4c569b5fe93b1eb37e6"
-            "62220b64e0868f305482330fb90100000000000000000000000000000000000000000000000000000000000000"
-            "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-            "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-            "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-            "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-            "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-            "008606157a98888983035a51832fefd88252088455f332d596d583010103844765746885676f312e35856c696e"
-            "7578a0c80a206814881ca8dd651f28c87548dce58a11f73494c76db0e8ef9b5f56fc208849d7ea07e14e613af8"
-            "70f86e8201ef850ba43b7400825208945da8f7f0c6a4561d2d8ae1491a0d3d8efc837957881b8528be98dba400"
-            "801ca059ba32680e2f742337bfcae2cb534928c455584b62770c812e39e5c79f6e0b3ea0252748ecd088f0272a"
-            "d5a4c78e543186b60b7ffcc9b64c4121802ccd109b9428c0"};
-
         Bytes rlp_bytes{*from_hex(rlp_hex)};
         ByteView in{rlp_bytes};
         Block bb{};
@@ -3899,6 +3913,213 @@ int main(int argc, char* argv[]) {
         SILKWORM_LOG(LogLevel::Error) << ex.what() << std::endl;
         return -5;
     }
+
+    int descriptor;
+    struct sockaddr_in sockaddress = {0};
+    const std::string address = ADDRESS;
+    const unsigned short port = PORT;
+    const char* ca_path = CA_PATH;
+    const char* ca_file = CA_FILE;
+    struct hostent* host;
+    char* bin_ip;
+    SSL* ssl;
+
+    LOG_S << "Starting client..." << END_S;
+
+    /**
+     * Create a socket file listen_descriptor
+     *
+     * socket       returns the file descrip#include <netinet/in.h>tor for the new socket and -a in case of error
+     * PF_INET      set the protocol to IP protocol family
+     * SOCK_STREAM  specify that we want to use TCP. Use SOCK_DGRAM for UDP
+     * 0            this parameter set the protocol. If 0 than the protocol is chosen automatically
+     */
+    if ((descriptor = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+        const int err = errno;
+        LOG_E << "Failed to init the socket: " << strerror(err) << END_E;
+        return 1;
+    }
+
+    sockaddress.sin_family = AF_INET;    // Always AF_INET
+    sockaddress.sin_port = htons(port);  // Port
+
+    /**
+     * Resolve the address passed like a string
+     * Note that `host` is a static buffer and in case of concurency this part needs to be locked
+     *
+     * Acquire mutex here
+     */
+    if ((host = gethostbyname(address.c_str())) == NULL) {
+        // Handle the error
+        const int err = h_errno;
+
+        switch (err) {
+            // The specified host is unknown.
+            case HOST_NOT_FOUND:
+                LOG_E << "Host not found" << END_E;
+                break;
+
+            /**
+             * The requested name is valid but does not have an IP
+             * address.  Another type of request to the name server for
+             * this domain may return an answer.  The constant NO_ADDRESS
+             * is a synonym for NO_DATA.
+             */
+            case NO_DATA:
+
+            // A nonrecoverable name server error occurred.
+            case NO_RECOVERY:
+
+            // A temporary error occurred on an authoritative name server. Try again later.
+            case TRY_AGAIN:
+
+            default:
+                LOG_E << "Failed to get the host name. try again later" << END_E;
+                break;
+        }
+
+        return 1;
+    }
+
+    /**
+     * Converts the Internet host address cp from the IPv4 numbers-and-dots notation into binary form.
+     * Note also that the `bin_ip` is a static buffer and in case of concurency needs to be locked
+     */
+    bin_ip = inet_ntoa(*reinterpret_cast<struct in_addr*>(host->h_addr_list[0]));
+
+    // Copy the address in order to unlock the static buffer
+    const int inet_pton_res = inet_pton(AF_INET, bin_ip, &sockaddress.sin_addr);
+    // Unlock the mutex here
+
+    // Check for error
+    if (inet_pton_res == 0) {
+        // `bin_ip` does not contain a character string representing a valid network address in the specified address
+        // family
+        LOG_E << "Invalid ip address" << END_E;
+        return 1;
+    } else if (inet_pton_res == -1) {
+        // Does not contain a valid address family
+        const int err = errno;
+        LOG_E << "Not a valid address family: " << strerror(err) << END_E;
+        return 1;
+    }
+
+    // Connect to the server
+    if (connect(descriptor, reinterpret_cast<sockaddr*>(&sockaddress), sizeof(sockaddress)) == -1) {
+        const int err = errno;
+        LOG_E << "Failed to connect to the server: " << strerror(err) << END_E;
+        return 1;
+    }
+
+    LOG_I << "Connected to the server " << address << ":" << port << END_I;
+
+    ///////////////////////////////////////////////////////////////// TLS
+    LOG_I << "Setup TLS connection " << END_I;
+
+    SSL_load_error_strings();  // Load error strings to get human readable results in case of error
+    ERR_load_crypto_strings();
+    ERR_clear_error();  // Clear the error queue before start
+
+    // Create new context
+    SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
+
+    if (ctx == NULL) {
+        LOG_E << "Failed to get openssl context" << END_E;
+        return 1;
+    }
+
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    SSL_CTX_set_verify_depth(ctx, 5);  // Chain of trust length
+
+    // Load the certificate from file and dir
+    if (SSL_CTX_load_verify_locations(ctx, ca_file, ca_path) == 0) {
+        LOG_E << "Failed to load the certificate/s" << END_E;
+        // NOTE(max): In case we return but not close the program we want to free the context
+        SSL_CTX_free(ctx);
+        return 1;
+    }
+
+    // Create a new TLS structure
+    if ((ssl = SSL_new(ctx)) == NULL) {
+        LOG_E << "Failed to create a new SSL" << END_E;
+        SSL_CTX_free(ctx);
+        return 1;
+    }
+
+    // Set the hostname to send with the "Client Hello"
+    if (SSL_set_tlsext_host_name(ssl, address.c_str()) == 0) {
+        LOG_E << "Failed to set the host name to send with the Client Hello" << END_E;
+        SSL_CTX_free(ctx);
+        SSL_free(ssl);
+        return 1;
+    }
+
+    // Set the options on how check the hostname
+    SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_WILDCARDS);
+
+    // Set the hostname to verify
+    if (SSL_set1_host(ssl, address.c_str()) == 0) {
+        LOG_E << "Failed to set the hostname to verify" << END_E;
+        SSL_CTX_free(ctx);
+        SSL_free(ssl);
+        return 1;
+    }
+
+    // Connect the socket file descriptor with the ssl object
+    if (SSL_set_fd(ssl, descriptor) == 0) {
+        LOG_E << "Failed to bind the ssl object and the socket file descriptor" << END_E;
+        SSL_CTX_free(ctx);
+        SSL_free(ssl);
+        return 1;
+    }
+
+    const int connect_e = SSL_connect(ssl);
+
+    if (connect_e <= 0) {
+        LOG_E << "Failed to establish TLS connection" << END_E;
+        LOG_SSL_STACK();
+
+        SSL_CTX_free(ctx);
+        SSL_free(ssl);
+        return 1;
+    }
+
+    LOG_S << "TLS connection established with the server" << END_S;
+    // Send data to the client
+    const int sent_data = SSL_write(ssl, rlp_hex, sizeof(rlp_hex));
+
+    if (sent_data <= 0) {
+        LOG_E << "Failed to send message to the server" << END_E;
+        LOG_SSL_STACK();
+
+        SSL_CTX_free(ctx);
+        SSL_free(ssl);
+        return 1;
+    }
+
+    LOG_I << "Send: " << rlp_hex << END_I;
+
+    // Receive data from the server
+    char msg[sizeof(MSG_2)];
+    const int received_data = SSL_read(ssl, msg, sizeof(MSG_2));
+
+    if (received_data <= 0) {
+        LOG_E << "Failed to receive message from the client" << END_E;
+        LOG_SSL_STACK();
+
+        SSL_CTX_free(ctx);
+        SSL_free(ssl);
+        return 1;
+    }
+
+    LOG_I << "Received: " << msg << END_I;
+
+    // Clean up before exit
+    LOG_S << "Closing client..." << END_S;
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    close(descriptor);
 
     return 0;
 }
