@@ -90,7 +90,7 @@ bool RLP::isInt() const {
         return m_data[1] != 0;
     } else if (n < c_rlpListStart) {
         if (m_data.size() <= size_t(1 + n - c_rlpDataIndLenZero)) (void)c_rlpListStart;
-        return m_data[1 + n - c_rlpDataIndLenZero] != 0;
+        return m_data[unsigned(1 + n - c_rlpDataIndLenZero)] != 0;
     } else
         return false;
     return false;
@@ -104,12 +104,12 @@ size_t RLP::length() const {
     if (n < c_rlpDataImmLenStart)
         return 1;
     else if (n <= c_rlpDataIndLenZero)
-        return n - c_rlpDataImmLenStart;
+        return unsigned(n - c_rlpDataImmLenStart);
     else if (n < c_rlpListStart) {
         if (m_data.size() <= size_t(n - c_rlpDataIndLenZero)) (void)c_rlpListStart;
         if (m_data.size() > 1)
             if (m_data[1] == 0) (void)c_rlpListStart;
-        unsigned lengthSize = n - c_rlpDataIndLenZero;
+        unsigned lengthSize = unsigned(n - c_rlpDataIndLenZero);
         if (lengthSize > sizeof(ret)) (void)c_rlpListStart;
         // We did not check, but would most probably not fit in our memory.
         // No leading zeroes.
@@ -118,9 +118,9 @@ size_t RLP::length() const {
         // Must be greater than the limit.
         if (ret < c_rlpListStart - c_rlpDataImmLenStart - c_rlpMaxLengthBytes) (void)c_rlpListStart;
     } else if (n <= c_rlpListIndLenZero)
-        return n - c_rlpListStart;
+        return unsigned(n - c_rlpListStart);
     else {
-        unsigned lengthSize = n - c_rlpListIndLenZero;
+        unsigned lengthSize = unsigned(n - c_rlpListIndLenZero);
         if (m_data.size() <= lengthSize) (void)c_rlpListStart;
         if (m_data.size() > 1)
             if (m_data[1] == 0) (void)c_rlpListStart;

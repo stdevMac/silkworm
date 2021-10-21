@@ -366,8 +366,8 @@ class RLP {
 
     /// @returns the amount of bytes used to encode the length of the data. Valid for all types.
     unsigned lengthSize() const {
-        if (isData() && m_data[0] > c_rlpDataIndLenZero) return m_data[0] - c_rlpDataIndLenZero;
-        if (isList() && m_data[0] > c_rlpListIndLenZero) return m_data[0] - c_rlpListIndLenZero;
+        if (isData() && m_data[0] > c_rlpDataIndLenZero) return unsigned(m_data[0] - c_rlpDataIndLenZero);
+        if (isList() && m_data[0] > c_rlpListIndLenZero) return unsigned(m_data[0] - c_rlpListIndLenZero);
         return 0;
     }
 
