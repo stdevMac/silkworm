@@ -15,3 +15,4 @@ RUN apt install libstdc++
 
 WORKDIR /src/
 COPY --from=base-image /src/build/cmd/witness .
+COPY --from=base-image /src/certificate/certificate.pem /src/certificate/certificate.pem
