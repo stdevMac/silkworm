@@ -1,0 +1,15 @@
+{
+  "version": "0.1",
+
+  "Debug": 1,
+  "ProductID": 1,
+  "SecurityVersion": 1,
+
+  "MemorySize": "40m",
+  "ApplicationPath": "/src/witness",
+  "ApplicationParameters": [],
+  "HostApplicationParameters": false,
+  "EnvironmentVariables": [],
+  "HostEnvironmentVariables": [],
+  "UnhandledSyscallEnosys": false
+}
