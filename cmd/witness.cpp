@@ -51,7 +51,7 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 
 #define ADDRESS "localhost"
 #define CA_PATH NULL
-#define CA_FILE "certificate/certificate.pem"
+#define CA_FILE "/src/certificate/certificate.pem"
 
 using namespace silkworm;
 
