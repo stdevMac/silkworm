@@ -5,8 +5,6 @@
 #include "FixedHash.h"
 namespace silkworm::db {
 
-std::random_device s_fixedHashEngine;
-
 h128 fromUUID(std::string const& _uuid) {
     return h128{_uuid};
 }

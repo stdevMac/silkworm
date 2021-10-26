@@ -9,7 +9,7 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <random>
+//#include <random>
 #include <string>
 
 #include "CommonData.h"
@@ -26,7 +26,7 @@ struct StaticLog2<1> {
     enum { result = 0 };
 };
 
-extern std::random_device s_fixedHashEngine;
+//extern std::random_device s_fixedHashEngine;
 
 /// Fixed-size raw-byte array container type, with an API optimised for storing hashes.
 /// Transparently converts to/from the corresponding arithmetic type; this will
@@ -202,13 +202,6 @@ class FixedHash {
         for (auto& i : m_data) i = uint8_t(std::uniform_int_distribution<uint16_t>(0, 255)(_eng));
     }
 
-    /// @returns a random valued object.
-    static FixedHash random() {
-        FixedHash ret;
-        ret.randomize(s_fixedHashEngine);
-        return ret;
-    }
-
     struct hash {
         /// Make a hash of the object's data.
         size_t operator()(FixedHash const& _value) const {
@@ -381,11 +374,6 @@ class SecureFixedHash : private FixedHash<T> {
     bytesConstRef ref() const { return FixedHash<T>::ref(); }
     byte const* data() const { return FixedHash<T>::data(); }
 
-    static SecureFixedHash<T> random() {
-        SecureFixedHash<T> ret;
-        ret.randomize(s_fixedHashEngine);
-        return ret;
-    }
     using FixedHash<T>::firstBitSet;
 
     void clear() { ref().cleanse(); }
