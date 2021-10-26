@@ -32,7 +32,7 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 
 #include <CLI/CLI.hpp>
 #include <arpa/inet.h>
-#include <magic_enum.hpp>
+//#include <magic_enum.hpp>
 #include <netinet/in.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -41,10 +41,8 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 
 #include <silkworm/common/directories.hpp>
 #include <silkworm/common/log.hpp>
-#include <silkworm/db/FixedHash.h>
+//#include <silkworm/db/FixedHash.h>
 #include <silkworm/db/buffer.hpp>
-#include <silkworm/db/db.h>
-#include <silkworm/db/mdbx.hpp>
 #include <silkworm/stagedsync/stagedsync.hpp>
 
 #include "client.h"
