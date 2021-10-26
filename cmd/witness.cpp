@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
 
     try {
         // TODO Clean use of txn
-        mdbx::txn_managed txn{};
+        //        mdbx::txn_managed txn{};
         std::vector<std::string> rlps{
             "f9021af90215a0abec7af08dfaf663ff46e645eab70a168e82a03a227cbcaccba9e455d1e42522a01dcc4de8de"
             "c75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d493479452bc44d5378309ee2abf1539bf71de1b7d"
@@ -3892,14 +3892,14 @@ int main(int argc, char* argv[]) {
         ByteView in2{rlp2};
         Block b_trie{};
         db::StateCacheDB stateCacheDb{};
-        stagedsync::insert_witness(txn, stateCacheDb);
+        stagedsync::insert_witness(stateCacheDb);
         (void)rlp::decode(in, bb);
         (void)rlp::decode(in2, b_trie);
         bb.recover_senders();
         assert(bb.header.number == b_trie.header.number + 1);
         auto y{to_hex(b_trie.header.state_root)};
         (void)y;
-        auto execution_result{stagedsync::execute_block(txn, bb, stateCacheDb, db::h256{y})};
+        auto execution_result{stagedsync::execute_block(bb, stateCacheDb, db::h256{y})};
 
         if (execution_result == silkworm::stagedsync::StageResult::kSuccess) {
             SILKWORM_LOG(LogLevel::Info) << "The block process fine" << std::endl;

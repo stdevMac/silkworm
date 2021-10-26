@@ -39,8 +39,7 @@ using namespace silkworm::db;
 
 namespace silkworm::stagedsync {
 
-void insert_witness(mdbx::txn& txn, db::StateCacheDB& odb) {
-    (void)txn;
+void insert_witness(db::StateCacheDB& odb) {
 //    auto state{db::open_cursor(txn, db::table::kTrieOfAccounts)};
 //    mdbx::slice value{};
 //    auto key = mdbx::slice("0xbc4da42c51a54602e97563f49e236495284a4efdd4514d2de45f25b6f1ffd5a8");
@@ -340,7 +339,8 @@ StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks
     return StageResult::kSuccess;
 }
 
-StageResult execute_block(mdbx::txn& txn, Block& block, StateCacheDB& odb, h256 root_hash) {
+StageResult execute_block(Block& block, StateCacheDB& odb, h256 root_hash) {
+    mdbx::txn txn{};
     (void)txn;
     const auto config{db::read_mainnet_config()};
     (void)odb;
