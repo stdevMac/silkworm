@@ -340,8 +340,6 @@ StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks
 }
 
 StageResult execute_block(Block& block, StateCacheDB& odb, h256 root_hash) {
-    mdbx::txn txn{};
-    (void)txn;
     const auto config{db::read_mainnet_config()};
     (void)odb;
     OverlayState buffer{odb};
