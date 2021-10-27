@@ -36,7 +36,7 @@ void AccountTrieCursor::consume_node(ByteView to) {
     }
 
     const auto node{unmarshal_node(db::from_slice(entry.value))};
-    if(node != std::nullopt) {
+    if (node != std::nullopt) {
         return;
     }
     assert(node->state_mask() != 0);
@@ -330,35 +330,38 @@ static void changed_accounts(mdbx::txn& txn, BlockNum from, PrefixSet& out) {
 }
 
 Account DbTrieLoader::get_account(evmc::address address, BlockNum from) {
-    const ByteView address_b{db::from_slice(db::to_slice(address)).substr(0, kAddressLength)};
-
-    PrefixSet changed;
-    changed_accounts(txn_, from, changed);
-
-    auto acc_state{db::open_cursor(txn_, db::table::kHashedAccounts)};
-
-    for (AccountTrieCursor acc_trie{txn_, changed}; acc_trie.key() != std::nullopt;) {
-        if (acc_trie.can_skip_state()) {
-            assert(acc_trie.hash() != nullptr);
-            hb_.add_branch_node(*acc_trie.key(), *acc_trie.hash(), acc_trie.children_are_in_trie());
-            acc_trie.next(/*skip_children=*/true);
-            continue;
-        }
-
-        const Bytes first_uncovered_prefix{pack_nibbles(*acc_trie.key())};
-        acc_trie.next(/*skip_children=*/false);
-
-        for (auto acc{acc_state.lower_bound(db::to_slice(first_uncovered_prefix), /*throw_notfound=*/false)}; acc.done;
-             acc = acc_state.to_next(/*throw_notfound=*/false)) {
-            const Bytes unpacked_key{unpack_nibbles(db::from_slice(acc.key))};
-            if (acc_trie.key().has_value() && acc_trie.key().value() < unpacked_key) {
-                continue;
-            }
-            const auto [account, err]{decode_account_from_storage(db::from_slice(acc.value))};
-            rlp::err_handler(err);
-            return account;
-        }
-    }
+    (void)address;
+    (void)from;
+    //    const ByteView address_b{db::from_slice(db::to_slice(address)).substr(0, kAddressLength)};
+    //
+    //    PrefixSet changed;
+    //    changed_accounts(txn_, from, changed);
+    //
+    //    auto acc_state{db::open_cursor(txn_, db::table::kHashedAccounts)};
+    //
+    //    for (AccountTrieCursor acc_trie{txn_, changed}; acc_trie.key() != std::nullopt;) {
+    //        if (acc_trie.can_skip_state()) {
+    //            assert(acc_trie.hash() != nullptr);
+    //            hb_.add_branch_node(*acc_trie.key(), *acc_trie.hash(), acc_trie.children_are_in_trie());
+    //            acc_trie.next(/*skip_children=*/true);
+    //            continue;
+    //        }
+    //
+    //        const Bytes first_uncovered_prefix{pack_nibbles(*acc_trie.key())};
+    //        acc_trie.next(/*skip_children=*/false);
+    //
+    //        for (auto acc{acc_state.lower_bound(db::to_slice(first_uncovered_prefix), /*throw_notfound=*/false)};
+    //        acc.done;
+    //             acc = acc_state.to_next(/*throw_notfound=*/false)) {
+    //            const Bytes unpacked_key{unpack_nibbles(db::from_slice(acc.key))};
+    //            if (acc_trie.key().has_value() && acc_trie.key().value() < unpacked_key) {
+    //                continue;
+    //            }
+    //            const auto [account, err]{decode_account_from_storage(db::from_slice(acc.value))};
+    //            rlp::err_handler(err);
+    //            return account;
+    //        }
+    //    }
 
     return {};
 }
@@ -384,7 +387,6 @@ static evmc::bytes32 increment_intermediate_hashes(mdbx::txn& txn, const std::fi
 
     return root;
 }
-
 
 evmc::bytes32 increment_intermediate_hashes(mdbx::txn& txn, const std::filesystem::path& etl_dir, BlockNum from,
                                             const evmc::bytes32* expected_root) {
