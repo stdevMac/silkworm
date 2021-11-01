@@ -35,6 +35,12 @@
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_types_2eproto
+#ifdef major
+#undef major
+#endif
+#ifdef minor
+#undef minor
+#endif
 PROTOBUF_NAMESPACE_OPEN
 namespace internal {
 class AnyMetadata;

@@ -8,9 +8,7 @@ RUN mkdir -p /src/build \
  && make
 
 # stage2 get binaries
-FROM ubuntu:18.04
-
-RUN apt install libstdc++
+FROM cmake:ubuntu 
 
 WORKDIR /src/
 COPY --from=base-image /src/build/cmd/witness .

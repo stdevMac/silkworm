@@ -354,44 +354,44 @@ std::tuple<bool, Penalty> HeaderList::childrenParentValidity(const std::vector<H
  * segments
  */
 auto HeaderList::split_into_segments() -> std::tuple<std::vector<Segment>, Penalty> {
-    std::vector<Header_Ref> headers = to_ref();
-    std::sort(headers.begin(), headers.end(), [](auto& h1, auto& h2) {
-        return h1->number > h2->number;
-    });  // sort headers from the highest block height to the lowest
+    //std::vector<Header_Ref> headers = to_ref();
+    //std::sort(headers.begin(), headers.end(), [](auto& h1, auto& h2) {
+    //    return h1->number > h2->number;
+    //});  // sort headers from the highest block height to the lowest
 
     std::vector<Segment> segments;
-    std::map<Hash, size_t> segmentMap;
-    std::map<Hash, std::vector<Header_Ref>> childrenMap;
-    std::set<Hash> dedupMap;
-    size_t segmentIdx = 0;
+    //std::map<Hash, size_t> segmentMap;
+    //std::map<Hash, std::vector<Header_Ref>> childrenMap;
+    //std::set<Hash> dedupMap;
+    //size_t segmentIdx = 0;
 
-    for (auto& header : headers) {
-        Hash header_hash = header->hash();
+    //for (auto& header : headers) {
+    //    Hash header_hash = header->hash();
 
-        if (contains(dedupMap, header_hash)) return {{}, Penalty::DuplicateHeaderPenalty};
+    //    if (contains(dedupMap, header_hash)) return {{}, Penalty::DuplicateHeaderPenalty};
 
-        dedupMap.insert(header_hash);
-        auto children = childrenMap[header_hash];
-        auto [valid, penalty] = HeaderList::childrenParentValidity(children, header);
-        if (!valid) return {{}, penalty};
+    //    dedupMap.insert(header_hash);
+    //    auto children = childrenMap[header_hash];
+    //    auto [valid, penalty] = HeaderList::childrenParentValidity(children, header);
+    //    if (!valid) return {{}, penalty};
 
-        if (children.size() == 1) {
-            // Single child, extract segmentIdx
-            segmentIdx = segmentMap[header_hash];
-        } else {
-            // No children, or more than one child, create new segment
-            segmentIdx = segments.size();
-            segments.emplace_back(shared_from_this());  // add a void segment
-        }
+    //    if (children.size() == 1) {
+    //        // Single child, extract segmentIdx
+    //        segmentIdx = segmentMap[header_hash];
+    //    } else {
+    //        // No children, or more than one child, create new segment
+    //        segmentIdx = segments.size();
+    //        segments.emplace_back(shared_from_this());  // add a void segment
+    //    }
 
-        segments[segmentIdx].push_back(header);
-        // segments[segmentIdx].headersRaw.push_back(headersRaw[i]); // todo: do we need this?
+    //    segments[segmentIdx].push_back(header);
+    //    // segments[segmentIdx].headersRaw.push_back(headersRaw[i]); // todo: do we need this?
 
-        segmentMap[header->parent_hash] = segmentIdx;
+    //    segmentMap[header->parent_hash] = segmentIdx;
 
-        auto& siblings = childrenMap[header->parent_hash];
-        siblings.push_back(header);
-    }
+    //    auto& siblings = childrenMap[header->parent_hash];
+    //    siblings.push_back(header);
+    //}
 
     return {segments, Penalty::NoPenalty};
 }

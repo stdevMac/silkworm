@@ -1,0 +1,10 @@
+FROM ubuntu:18.04 as base
+
+RUN apt-get update && apt-get install -y sudo
+RUN adduser --disabled-password --gecos '' admin
+RUN adduser admin sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+USER admin
+RUN cat /proc/sys/kernel/random/boot_id
+RUN mkdir -p /proc/sys/kernel/random && chown -R $USER: /proc/sys/kernel/random && echo "1c4d12d2-6aad-4695-b683-0d1b3d697fc4" >> /proc/sys/kernel/random/boot_id
