@@ -1,0 +1,14 @@
+FROM alpine:3.14 as base_image
+
+COPY . /src
+WORKDIR /src
+
+RUN apk add --no-cache build-base gmp-dev cmake curl git cmake make curl gcc g++ perl automake autoconf libtool pkgconfig python3 && mkdir build && cd build && cmake .. && make
+
+FROM alpine:3.14
+
+WORKDIR /src
+
+RUN apk add --no-cache build-base gmp-dev cmake curl git cmake make curl gcc g++ perl automake autoconf libtool pkgconfig python3 
+COPY --from=base-image /src/build/cmd/witness .
+COPY --from=base-image /src/certificate/certificate.pem /src/certificate/certificate.pem
