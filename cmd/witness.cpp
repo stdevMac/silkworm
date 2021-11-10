@@ -1,27 +1,3 @@
-/*
-   Copyright 2021 The Silkworm Authors
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-/*
-Roughly corresponds to
-https://github.com/ledgerwatch/erigon/tree/master/eth/stagedsync#stage-7-compute-state-root-stage
-
-At the moment only full regeneration is supported, not incremental update.
-
-The previous Generate Hashed State Stage must be performed prior to calling this executable.
-*/
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <errno.h>
 #include <netdb.h>
@@ -33,16 +9,27 @@ The previous Generate Hashed State Stage must be performed prior to calling this
 #include <CLI/CLI.hpp>
 #include <arpa/inet.h>
 //#include <magic_enum.hpp>
+#include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <mbedtls/net_sockets.h>
+#include <mbedtls/ssl.h>
 #include <netinet/in.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <sys/socket.h>
+#include <sys/syscall.h>
 
 #include <silkworm/common/directories.hpp>
 #include <silkworm/common/log.hpp>
-//#include <silkworm/db/FixedHash.h>
 #include <silkworm/db/buffer.hpp>
+#include <silkworm/secure/tee.h>
+#include <silkworm/secure/tlscli.h>
 #include <silkworm/stagedsync/stagedsync.hpp>
 
 #include "client.h"
