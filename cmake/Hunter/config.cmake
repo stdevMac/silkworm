@@ -52,13 +52,6 @@ hunter_config(
   CMAKE_ARGS ETHASH_BUILD_ETHASH=ON ETHASH_BUILD_GLOBAL_CONTEXT=NO ETHASH_BUILD_TESTS=OFF
 )
 
-hunter_config(
-  MbedTLS
-  VERSION 3.0.0
-  URL https://github.com/ARMmbed/mbedtls/archive/v3.0.0.tar.gz
-  SHA1 f500284a8eda028ad76dc466e593218164dabe66
-)
-
 hunter_config(Protobuf VERSION 3.14.0-4a09d77-p0)
 
 hunter_config(

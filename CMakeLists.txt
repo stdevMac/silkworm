@@ -183,6 +183,8 @@ if(NOT SILKWORM_CORE_ONLY)
   target_include_directories(mdbx-static INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libmdbx)
 endif()
 
+add_subdirectory(mbedtls)
+
 # Compiler enforcements on Silkworm
 if(NOT MSVC)
   add_compile_options(-Werror -Wall -Wextra)

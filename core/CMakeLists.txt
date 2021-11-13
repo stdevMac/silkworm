@@ -16,7 +16,6 @@
 
 find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-find_package(MbedTLS)
 
 if (MSVC)
     add_compile_options(/EHsc)
@@ -31,7 +30,7 @@ add_library(silkworm_core ${SILKWORM_CORE_SRC})
 target_include_directories(silkworm_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(SILKWORM_CORE_PUBLIC_LIBS evmc ethash::ethash intx::intx ff Microsoft.GSL::GSL nlohmann_json secp256k1
-        MbedTLS::mbedtls MbedTLS::mbedcrypto MbedTLS::mbedx509)
+        mbedtls mbedcrypto mbedx509)
 set(SILKWORM_CORE_PRIVATE_LIBS evmone gmp)
 
 if (NOT SILKWORM_WASM_API)

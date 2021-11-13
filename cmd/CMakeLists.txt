@@ -64,11 +64,8 @@ if (NOT SILKWORM_CORE_ONLY)
     #add_executable(execute execute.cpp)
     #target_link_libraries(execute PRIVATE silkworm_node CLI11::CLI11)
 
-    hunter_add_package(MbedTLS)
-    find_package(MbedTLS)
-
     add_executable(witness witness.cpp)
-    target_link_libraries(witness PRIVATE silkworm_node CLI11::CLI11 MbedTLS::mbedtls MbedTLS::mbedcrypto MbedTLS::mbedx509)
+    target_link_libraries(witness PRIVATE silkworm_node CLI11::CLI11 mbedtls mbedcrypto mbedx509)
 
     #add_executable(unwind_execution unwind_execution.cpp)
     #target_link_libraries(unwind_execution PRIVATE silkworm_node CLI11::CLI11)
