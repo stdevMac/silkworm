@@ -1,9 +1,8 @@
 //
 // Created by Marcos Maceo on 11/5/21.
 //
-
+#pragma GCC diagnostic ignored "-Wold-style-cast" 
 #include "tlscli.h"
-#define _GNU_SOURCE
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -29,6 +28,7 @@
 #include "peer_tee_identity.h"
 #include "tee.h"
 #include "tlscli.h"
+
 
 #define DEBUG_LEVEL 1
 
@@ -63,7 +63,6 @@ __attribute__((format(printf, 3, 4))) void _put_mbedtls_err(tlscli_err_t* err, i
         vsnprintf(buf2, sizeof(buf2), fmt, ap);
         va_end(ap);
 
-        snprintf(err->buf, sizeof(err->buf), "%s: %s", buf1, buf2);
     }
 }
 
@@ -210,13 +209,13 @@ static int _configure_cli(tlscli_t* cli, bool debug, void* cert, size_t cert_siz
 
     _clear_err(err);
 
-    if ((r = mbedtls_x509_crt_parse(&cli->crt, cert, cert_size) != 0)) {
+    if ((r = mbedtls_x509_crt_parse(&cli->crt, reinterpret_cast<const unsigned char*>(cert), cert_size) != 0)) {
         _put_mbedtls_err(err, r, "%s", "unable to add certificate");
         ret = r;
         goto done;
     }
 
-    if ((r = mbedtls_pk_parse_key(&cli->pk, private_key, private_key_size, NULL, 0)) != 0) {
+    if ((r = mbedtls_pk_parse_key(&cli->pk, reinterpret_cast<const unsigned char*>(private_key), private_key_size, NULL, 0)) != 0) {
         _put_mbedtls_err(err, r, "%s", "unable to add private key");
         ret = r;
         goto done;
@@ -286,7 +285,7 @@ int tlscli_connect(bool debug, const char* host, const char* port, void* cert, s
 
     /* Initialize the cli structure */
     {
-        if (!(cli = calloc(1, sizeof(tlscli_t)))) {
+        if (!(cli = static_cast<tlscli_t*>(calloc(1, sizeof(tlscli_t))))) {
             _put_err(err, "calloc() failed: out of memory");
             goto done;
         }
@@ -373,7 +372,7 @@ int tlscli_read(tlscli_t* cli, void* data, size_t size, tlscli_err_t* err) {
 
     for (;;) {
         memset(data, 0, size);
-        r = mbedtls_ssl_read(&cli->ssl, data, size);
+        r = mbedtls_ssl_read(&cli->ssl, reinterpret_cast<unsigned char*>(data), size);
 
         if (r == MBEDTLS_ERR_SSL_WANT_READ || r == MBEDTLS_ERR_SSL_WANT_WRITE) {
             continue;
@@ -417,7 +416,7 @@ int tlscli_write(tlscli_t* cli, const void* data, size_t size, tlscli_err_t* err
     }
 
     for (;;) {
-        r = mbedtls_ssl_write(&cli->ssl, data, size);
+        r = mbedtls_ssl_write(&cli->ssl, reinterpret_cast<const unsigned char*>(data), size);
 
         if (r == MBEDTLS_ERR_SSL_WANT_READ || r == MBEDTLS_ERR_SSL_WANT_WRITE) {
             continue;
@@ -464,3 +463,4 @@ done:
 void tlscli_put_err(const tlscli_err_t* err) {
     if (err) fprintf(stderr, "error: %s\n", err->buf);
 }
+
