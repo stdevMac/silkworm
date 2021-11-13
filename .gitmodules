@@ -23,3 +23,6 @@
 [submodule "libmdbx"]
 	path = libmdbx
 	url = https://github.com/stdevMac/libmdbx.git
+[submodule "mbedtls"]
+	path = mbedtls
+	url = https://github.com/ARMmbed/mbedtls
