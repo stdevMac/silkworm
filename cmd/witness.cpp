@@ -38,7 +38,108 @@
 #define CA_PATH NULL
 #define CA_FILE "/src/certificate/certificate.pem"
 
+#define TLS_CERT_PATH "./cert.der"
+#define TLS_PKEY_PATH "./private_key.pem"
+#define SERVER_PORT "17500"
+
 using namespace silkworm;
+
+static tlscli_err_t tlsError;
+
+static tlscli_t* trustedChannel;
+
+static int load_file(const char* path, void** buf, size_t* n) {
+    FILE* f;
+    long size;
+
+    if ((f = fopen(path, "rb")) == NULL) return (-1);
+
+    fseek(f, 0, SEEK_END);
+    if ((size = ftell(f)) == -1) {
+        fclose(f);
+        return (-1);
+    }
+    fseek(f, 0, SEEK_SET);
+
+    *n = (size_t)size;
+
+    if ((*buf = calloc(1, *n)) == NULL) {
+        fclose(f);
+        return (-1);
+    }
+
+    if (fread(*buf, 1, *n, f) != *n) {
+        fclose(f);
+        free(*buf);
+        *buf = NULL;
+        return (-1);
+    }
+
+    fclose(f);
+
+    return (0);
+}
+
+static int trusted_channel_init(const char* serverIP) {
+    int rc = 1;
+    void* cert = NULL;
+    size_t cert_size = 0;
+    void* pkey = NULL;
+    size_t pkey_size = 0;
+    bool enclave_mode = false;
+
+    if ((rc = tlscli_startup(&tlsError)) != 0) {
+        printf("client Agent failed! tlscli_startup\n");
+        goto done;
+    }
+
+    char* target = getenv("MYST_TARGET");
+    if (target && strcmp(target, "sgx") == 0) {
+        enclave_mode = true;
+        // The existence of the manifesto file indicates we are running in
+        // an enclave. Ask the kernel for help.
+        int ret = syscall(SYS_myst_gen_creds, &cert, &cert_size, &pkey, &pkey_size);
+        if (ret != 0) {
+            fprintf(stderr, "Error: failed to generate TLS credentials\n");
+            goto done;
+        }
+    } else {
+        // Load cert/pkey from files in non-enclave mode.
+        if (load_file(TLS_CERT_PATH, &cert, &cert_size)) {
+            fprintf(stderr, "Error: failed to load cert file %s\n", TLS_CERT_PATH);
+            goto done;
+        }
+        if (load_file(TLS_PKEY_PATH, &pkey, &pkey_size)) {
+            fprintf(stderr, "Error: failed to load private key file %s\n", TLS_PKEY_PATH);
+            goto done;
+        }
+    }
+
+    if ((rc = tlscli_connect(true, serverIP, SERVER_PORT, cert, cert_size, pkey, pkey_size, &trustedChannel,
+                             &tlsError)) != 0) {
+        printf("tlscli_connect failed!\n");
+        goto done;
+    }
+
+    rc = 0;
+done:
+
+    if (cert || pkey) {
+        if (enclave_mode)
+            syscall(SYS_myst_free_creds, cert, cert_size, pkey, pkey_size, NULL, 0);
+        else {
+            free(cert);
+            free(pkey);
+        }
+    }
+
+    if (rc != 0) {
+        tlscli_destroy(trustedChannel, &tlsError);
+        tlscli_shutdown(&tlsError);
+    }
+
+    return rc;
+}
 
 int main(int argc, char* argv[]) {
     CLI::App app{"Generate State tries and Run Block using witness only"};
@@ -3899,212 +4000,229 @@ int main(int argc, char* argv[]) {
         return -5;
     }
 
-    int descriptor;
-    struct sockaddr_in sockaddress = {0};
-    const std::string address = ADDRESS;
-    const unsigned short port = PORT;
-    const char* ca_path = CA_PATH;
-    const char* ca_file = CA_FILE;
-    struct hostent* host;
-    char* bin_ip;
-    SSL* ssl;
+    //    int descriptor;
+    //    struct sockaddr_in sockaddress = {0};
+    //    const std::string address = ADDRESS;
+    //    const unsigned short port = PORT;
+    //    const char* ca_path = CA_PATH;
+    //    const char* ca_file = CA_FILE;
+    //    struct hostent* host;
+    //    char* bin_ip;
+    //    SSL* ssl;
+    //
+    //    LOG_S << "Starting client..." << END_S;
+    //
+    //    /**
+    //     * Create a socket file listen_descriptor
+    //     *
+    //     * socket       returns the file descrip#include <netinet/in.h>tor for the new socket and -a in case of error
+    //     * PF_INET      set the protocol to IP protocol family
+    //     * SOCK_STREAM  specify that we want to use TCP. Use SOCK_DGRAM for UDP
+    //     * 0            this parameter set the protocol. If 0 than the protocol is chosen automatically
+    //     */
+    //    if ((descriptor = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+    //        const int err = errno;
+    //        LOG_E << "Failed to init the socket: " << strerror(err) << END_E;
+    //        return 1;
+    //    }
+    //
+    //    sockaddress.sin_family = AF_INET;    // Always AF_INET
+    //    sockaddress.sin_port = htons(port);  // Port
+    //
+    //    /**
+    //     * Resolve the address passed like a string
+    //     * Note that `host` is a static buffer and in case of concurency this part needs to be locked
+    //     *
+    //     * Acquire mutex here
+    //     */
+    //    if ((host = gethostbyname(address.c_str())) == NULL) {
+    //        // Handle the error
+    //        const int err = h_errno;
+    //
+    //        switch (err) {
+    //            // The specified host is unknown.
+    //            case HOST_NOT_FOUND:
+    //                LOG_E << "Host not found" << END_E;
+    //                break;
+    //
+    //            /**
+    //             * The requested name is valid but does not have an IP
+    //             * address.  Another type of request to the name server for
+    //             * this domain may return an answer.  The constant NO_ADDRESS
+    //             * is a synonym for NO_DATA.
+    //             */
+    //            case NO_DATA:
+    //
+    //            // A nonrecoverable name server error occurred.
+    //            case NO_RECOVERY:
+    //
+    //            // A temporary error occurred on an authoritative name server. Try again later.
+    //            case TRY_AGAIN:
+    //
+    //            default:
+    //                LOG_E << "Failed to get the host name. try again later" << END_E;
+    //                break;
+    //        }
+    //
+    //        return 1;
+    //    }
+    //
+    //    /**
+    //     * Converts the Internet host address cp from the IPv4 numbers-and-dots notation into binary form.
+    //     * Note also that the `bin_ip` is a static buffer and in case of concurency needs to be locked
+    //     */
+    //    bin_ip = inet_ntoa(*reinterpret_cast<struct in_addr*>(host->h_addr_list[0]));
+    //
+    //    // Copy the address in order to unlock the static buffer
+    //    const int inet_pton_res = inet_pton(AF_INET, bin_ip, &sockaddress.sin_addr);
+    //    // Unlock the mutex here
+    //
+    //    // Check for error
+    //    if (inet_pton_res == 0) {
+    //        // `bin_ip` does not contain a character string representing a valid network address in the specified
+    //        address
+    //        // family
+    //        LOG_E << "Invalid ip address" << END_E;
+    //        return 1;
+    //    } else if (inet_pton_res == -1) {
+    //        // Does not contain a valid address family
+    //        const int err = errno;
+    //        LOG_E << "Not a valid address family: " << strerror(err) << END_E;
+    //        return 1;
+    //    }
+    //
+    //    // Connect to the server
+    //    if (connect(descriptor, reinterpret_cast<sockaddr*>(&sockaddress), sizeof(sockaddress)) == -1) {
+    //        const int err = errno;
+    //        LOG_E << "Failed to connect to the server: " << strerror(err) << END_E;
+    //        return 1;
+    //    }
+    //
+    //    LOG_I << "Connected to the server " << address << ":" << port << END_I;
+    //
+    //    ///////////////////////////////////////////////////////////////// TLS
+    //    LOG_I << "Setup TLS connection " << END_I;
+    //
+    //    SSL_load_error_strings();  // Load error strings to get human readable results in case of error
+    //    ERR_load_crypto_strings();
+    //    ERR_clear_error();  // Clear the error queue before start
+    //
+    //    // Create new context
+    //    SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
+    //
+    //    if (ctx == NULL) {
+    //        LOG_E << "Failed to get openssl context" << END_E;
+    //        return 1;
+    //    }
+    //
+    //    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    //    SSL_CTX_set_verify_depth(ctx, 5);  // Chain of trust length
+    //
+    //    // Load the certificate from file and dir
+    //    if (SSL_CTX_load_verify_locations(ctx, ca_file, ca_path) == 0) {
+    //        LOG_E << "Failed to load the certificate/s" << END_E;
+    //        // NOTE(max): In case we return but not close the program we want to free the context
+    //        SSL_CTX_free(ctx);
+    //        return 1;
+    //    }
+    //
+    //    // Create a new TLS structure
+    //    if ((ssl = SSL_new(ctx)) == NULL) {
+    //        LOG_E << "Failed to create a new SSL" << END_E;
+    //        SSL_CTX_free(ctx);
+    //        return 1;
+    //    }
+    //
+    //    // Set the hostname to send with the "Client Hello"
+    //    if (SSL_set_tlsext_host_name(ssl, address.c_str()) == 0) {
+    //        LOG_E << "Failed to set the host name to send with the Client Hello" << END_E;
+    //        SSL_CTX_free(ctx);
+    //        SSL_free(ssl);
+    //        return 1;
+    //    }
+    //
+    //    // Set the options on how check the hostname
+    //    SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_WILDCARDS);
+    //
+    //    // Set the hostname to verify
+    //    if (SSL_set1_host(ssl, address.c_str()) == 0) {
+    //        LOG_E << "Failed to set the hostname to verify" << END_E;
+    //        SSL_CTX_free(ctx);
+    //        SSL_free(ssl);
+    //        return 1;
+    //    }
+    //
+    //    // Connect the socket file descriptor with the ssl object
+    //    if (SSL_set_fd(ssl, descriptor) == 0) {
+    //        LOG_E << "Failed to bind the ssl object and the socket file descriptor" << END_E;
+    //        SSL_CTX_free(ctx);
+    //        SSL_free(ssl);
+    //        return 1;
+    //    }
+    //
+    //    const int connect_e = SSL_connect(ssl);
+    //
+    //    if (connect_e <= 0) {
+    //        LOG_E << "Failed to establish TLS connection" << END_E;
+    //        LOG_SSL_STACK();
+    //
+    //        SSL_CTX_free(ctx);
+    //        SSL_free(ssl);
+    //        return 1;
+    //    }
+    //
+    //    LOG_S << "TLS connection established with the server" << END_S;
+    //    // Send data to the client
+    //    const int sent_data = SSL_write(ssl, rlp_hex, sizeof(rlp_hex));
+    //
+    //    if (sent_data <= 0) {
+    //        LOG_E << "Failed to send message to the server" << END_E;
+    //        LOG_SSL_STACK();
+    //
+    //        SSL_CTX_free(ctx);
+    //        SSL_free(ssl);
+    //        return 1;
+    //    }
+    //
+    //    LOG_I << "Send: " << rlp_hex << END_I;
+    //
+    //    // Receive data from the server
+    //    char msg[sizeof(MSG_2)];
+    //    const int received_data = SSL_read(ssl, msg, sizeof(MSG_2));
+    //
+    //    if (received_data <= 0) {
+    //        LOG_E << "Failed to receive message from the client" << END_E;
+    //        LOG_SSL_STACK();
+    //
+    //        SSL_CTX_free(ctx);
+    //        SSL_free(ssl);
+    //        return 1;
+    //    }
+    //
+    //    LOG_I << "Received: " << msg << END_I;
+    //
+    //    // Clean up before exit
+    //    LOG_S << "Closing client..." << END_S;
+    //    SSL_shutdown(ssl);
+    //    SSL_free(ssl);
+    //    SSL_CTX_free(ctx);
+    //    close(descriptor);
 
-    LOG_S << "Starting client..." << END_S;
+    int result = 0;
+    string ip = "51.132.188.146\0";
+    char * serverIP;
+    serverIP = &ip[0];
 
-    /**
-     * Create a socket file listen_descriptor
-     *
-     * socket       returns the file descrip#include <netinet/in.h>tor for the new socket and -a in case of error
-     * PF_INET      set the protocol to IP protocol family
-     * SOCK_STREAM  specify that we want to use TCP. Use SOCK_DGRAM for UDP
-     * 0            this parameter set the protocol. If 0 than the protocol is chosen automatically
-     */
-    if ((descriptor = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
-        const int err = errno;
-        LOG_E << "Failed to init the socket: " << strerror(err) << END_E;
-        return 1;
+    trusted_channel_init(serverIP);
+    if (trustedChannel == NULL) {
+        SILKWORM_LOG(LogLevel::Info) << "server: failed to establish channel\n" << std::endl;
+        goto done;
     }
+    int w = tlscli_write(trustedChannel, &ip, sizeof(ip), &tlsError);
+    SILKWORM_LOG(LogLevel::Info) << "Status of send: " << w << "_this" << std::endl;
 
-    sockaddress.sin_family = AF_INET;    // Always AF_INET
-    sockaddress.sin_port = htons(port);  // Port
-
-    /**
-     * Resolve the address passed like a string
-     * Note that `host` is a static buffer and in case of concurency this part needs to be locked
-     *
-     * Acquire mutex here
-     */
-    if ((host = gethostbyname(address.c_str())) == NULL) {
-        // Handle the error
-        const int err = h_errno;
-
-        switch (err) {
-            // The specified host is unknown.
-            case HOST_NOT_FOUND:
-                LOG_E << "Host not found" << END_E;
-                break;
-
-            /**
-             * The requested name is valid but does not have an IP
-             * address.  Another type of request to the name server for
-             * this domain may return an answer.  The constant NO_ADDRESS
-             * is a synonym for NO_DATA.
-             */
-            case NO_DATA:
-
-            // A nonrecoverable name server error occurred.
-            case NO_RECOVERY:
-
-            // A temporary error occurred on an authoritative name server. Try again later.
-            case TRY_AGAIN:
-
-            default:
-                LOG_E << "Failed to get the host name. try again later" << END_E;
-                break;
-        }
-
-        return 1;
-    }
-
-    /**
-     * Converts the Internet host address cp from the IPv4 numbers-and-dots notation into binary form.
-     * Note also that the `bin_ip` is a static buffer and in case of concurency needs to be locked
-     */
-    bin_ip = inet_ntoa(*reinterpret_cast<struct in_addr*>(host->h_addr_list[0]));
-
-    // Copy the address in order to unlock the static buffer
-    const int inet_pton_res = inet_pton(AF_INET, bin_ip, &sockaddress.sin_addr);
-    // Unlock the mutex here
-
-    // Check for error
-    if (inet_pton_res == 0) {
-        // `bin_ip` does not contain a character string representing a valid network address in the specified address
-        // family
-        LOG_E << "Invalid ip address" << END_E;
-        return 1;
-    } else if (inet_pton_res == -1) {
-        // Does not contain a valid address family
-        const int err = errno;
-        LOG_E << "Not a valid address family: " << strerror(err) << END_E;
-        return 1;
-    }
-
-    // Connect to the server
-    if (connect(descriptor, reinterpret_cast<sockaddr*>(&sockaddress), sizeof(sockaddress)) == -1) {
-        const int err = errno;
-        LOG_E << "Failed to connect to the server: " << strerror(err) << END_E;
-        return 1;
-    }
-
-    LOG_I << "Connected to the server " << address << ":" << port << END_I;
-
-    ///////////////////////////////////////////////////////////////// TLS
-    LOG_I << "Setup TLS connection " << END_I;
-
-    SSL_load_error_strings();  // Load error strings to get human readable results in case of error
-    ERR_load_crypto_strings();
-    ERR_clear_error();  // Clear the error queue before start
-
-    // Create new context
-    SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
-
-    if (ctx == NULL) {
-        LOG_E << "Failed to get openssl context" << END_E;
-        return 1;
-    }
-
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-    SSL_CTX_set_verify_depth(ctx, 5);  // Chain of trust length
-
-    // Load the certificate from file and dir
-    if (SSL_CTX_load_verify_locations(ctx, ca_file, ca_path) == 0) {
-        LOG_E << "Failed to load the certificate/s" << END_E;
-        // NOTE(max): In case we return but not close the program we want to free the context
-        SSL_CTX_free(ctx);
-        return 1;
-    }
-
-    // Create a new TLS structure
-    if ((ssl = SSL_new(ctx)) == NULL) {
-        LOG_E << "Failed to create a new SSL" << END_E;
-        SSL_CTX_free(ctx);
-        return 1;
-    }
-
-    // Set the hostname to send with the "Client Hello"
-    if (SSL_set_tlsext_host_name(ssl, address.c_str()) == 0) {
-        LOG_E << "Failed to set the host name to send with the Client Hello" << END_E;
-        SSL_CTX_free(ctx);
-        SSL_free(ssl);
-        return 1;
-    }
-
-    // Set the options on how check the hostname
-    SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_WILDCARDS);
-
-    // Set the hostname to verify
-    if (SSL_set1_host(ssl, address.c_str()) == 0) {
-        LOG_E << "Failed to set the hostname to verify" << END_E;
-        SSL_CTX_free(ctx);
-        SSL_free(ssl);
-        return 1;
-    }
-
-    // Connect the socket file descriptor with the ssl object
-    if (SSL_set_fd(ssl, descriptor) == 0) {
-        LOG_E << "Failed to bind the ssl object and the socket file descriptor" << END_E;
-        SSL_CTX_free(ctx);
-        SSL_free(ssl);
-        return 1;
-    }
-
-    const int connect_e = SSL_connect(ssl);
-
-    if (connect_e <= 0) {
-        LOG_E << "Failed to establish TLS connection" << END_E;
-        LOG_SSL_STACK();
-
-        SSL_CTX_free(ctx);
-        SSL_free(ssl);
-        return 1;
-    }
-
-    LOG_S << "TLS connection established with the server" << END_S;
-    // Send data to the client
-    const int sent_data = SSL_write(ssl, rlp_hex, sizeof(rlp_hex));
-
-    if (sent_data <= 0) {
-        LOG_E << "Failed to send message to the server" << END_E;
-        LOG_SSL_STACK();
-
-        SSL_CTX_free(ctx);
-        SSL_free(ssl);
-        return 1;
-    }
-
-    LOG_I << "Send: " << rlp_hex << END_I;
-
-    // Receive data from the server
-    char msg[sizeof(MSG_2)];
-    const int received_data = SSL_read(ssl, msg, sizeof(MSG_2));
-
-    if (received_data <= 0) {
-        LOG_E << "Failed to receive message from the client" << END_E;
-        LOG_SSL_STACK();
-
-        SSL_CTX_free(ctx);
-        SSL_free(ssl);
-        return 1;
-    }
-
-    LOG_I << "Received: " << msg << END_I;
-
-    // Clean up before exit
-    LOG_S << "Closing client..." << END_S;
-    SSL_shutdown(ssl);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    close(descriptor);
-
-    return 0;
+done:
+    tlscli_destroy(trustedChannel, &tlsError);
+    tlscli_shutdown(&tlsError);
+    return result;
 }
