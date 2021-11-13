@@ -90,7 +90,21 @@ static int trusted_channel_init(const char* serverIP) {
 
     if ((rc = tlscli_startup(&tlsError)) != 0) {
         printf("client Agent failed! tlscli_startup\n");
-        goto done;
+        if (cert || pkey) {
+            if (enclave_mode)
+                syscall(SYS_myst_free_creds, cert, cert_size, pkey, pkey_size, NULL, 0);
+            else {
+                free(cert);
+                free(pkey);
+            }
+        }
+
+        if (rc != 0) {
+            tlscli_destroy(trustedChannel, &tlsError);
+            tlscli_shutdown(&tlsError);
+        }
+
+        return rc;
     }
 
     char* target = getenv("MYST_TARGET");
@@ -4210,18 +4224,19 @@ int main(int argc, char* argv[]) {
 
     int result = 0;
     string ip = "51.132.188.146\0";
-    char * serverIP;
+    char* serverIP;
     serverIP = &ip[0];
 
     trusted_channel_init(serverIP);
     if (trustedChannel == NULL) {
         SILKWORM_LOG(LogLevel::Info) << "server: failed to establish channel\n" << std::endl;
-        goto done;
+        tlscli_destroy(trustedChannel, &tlsError);
+        tlscli_shutdown(&tlsError);
+        return result;
     }
     int w = tlscli_write(trustedChannel, &ip, sizeof(ip), &tlsError);
     SILKWORM_LOG(LogLevel::Info) << "Status of send: " << w << "_this" << std::endl;
 
-done:
     tlscli_destroy(trustedChannel, &tlsError);
     tlscli_shutdown(&tlsError);
     return result;
