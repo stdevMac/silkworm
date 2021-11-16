@@ -6,7 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <CLI/CLI.hpp>
 #include <arpa/inet.h>
 //#include <magic_enum.hpp>
 #include <assert.h>
@@ -156,19 +155,11 @@ done:
 }
 
 int main(int argc, char* argv[]) {
-    CLI::App app{"Generate State tries and Run Block using witness only"};
 
     namespace fs = std::filesystem;
     using namespace silkworm;
-
-    //    std::string chain_data{DataDirectory{}.chaindata().path().string()};
-    //    --chaindata "/Users/maceo/.local/share/erigon/chaindata"
-    //    app.add_option("--chaindata", chain_data, "Path to a database populated by Erigon", true)
-    //        ->check(CLI::ExistingDirectory);
-
-    CLI11_PARSE(app, argc, argv);
-
-    SILKWORM_LOG(LogLevel::Info) << "Regenerating account & storage tries." << std::endl;
+    
+    SILKWORM_LOG(LogLevel::Info) << "Processing witness" << std::endl;
 
     const char* target = getenv("MYST_TARGET");
     if (!target) {
@@ -4223,9 +4214,14 @@ int main(int argc, char* argv[]) {
     //    close(descriptor);
 
     int result = 0;
-    string ip = "51.132.188.146\0";
-    char* serverIP;
-    serverIP = &ip[0];
+    char* serverIP = NULL;
+
+    if (argc != 2)
+    {
+        fprintf(stderr, "usage: %s serverIP\n", argv[0]);
+        return 1;
+    }
+    serverIP = argv[1];
 
     trusted_channel_init(serverIP);
     if (trustedChannel == NULL) {
@@ -4234,7 +4230,8 @@ int main(int argc, char* argv[]) {
         tlscli_shutdown(&tlsError);
         return result;
     }
-    int w = tlscli_write(trustedChannel, &ip, sizeof(ip), &tlsError);
+    string message = "Message inside attestation";
+    int w = tlscli_write(trustedChannel, &message, sizeof(message), &tlsError);
     SILKWORM_LOG(LogLevel::Info) << "Status of send: " << w << "_this" << std::endl;
 
     tlscli_destroy(trustedChannel, &tlsError);
