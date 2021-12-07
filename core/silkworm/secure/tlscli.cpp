@@ -259,36 +259,39 @@ int tlscli_connect(bool debug, const char* host, const char* port, void* cert, s
     int r;
     tlscli_t* cli = NULL;
 
+    fprintf(stdout, "Starting connection");
     _clear_err(err);
 
     if (cli_out) *cli_out = NULL;
 
     if (!_started) {
-        _put_err(err, "not started: please call tlscli_startup()");
+        fprintf(stdout, "not started: please call tlscli_startup()");
         goto done;
     }
 
     if (!cli_out) {
-        _put_err(err, "invalid cli parameter");
+        fprintf(stdout, "invalid cli parameter");
         goto done;
     }
 
     if (!host) {
-        _put_err(err, "invalid host parameter");
+        fprintf(stdout, "invalid host parameter");
         goto done;
     }
 
     if (!port) {
-        _put_err(err, "invalid port parameter");
+        fprintf(stdout, "invalid port parameter");
         goto done;
     }
 
+    fprintf(stdout, "Initialize the cli structure");
     /* Initialize the cli structure */
     {
         if (!(cli = static_cast<tlscli_t*>(calloc(1, sizeof(tlscli_t))))) {
-            _put_err(err, "calloc() failed: out of memory");
+            fprintf(stdout, "calloc() failed: out of memory");
             goto done;
         }
+    	fprintf(stdout, "Starting mbedtls_*");
 
         mbedtls_net_init(&cli->net);
         mbedtls_ssl_init(&cli->ssl);
@@ -298,18 +301,19 @@ int tlscli_connect(bool debug, const char* host, const char* port, void* cert, s
     }
 
     if ((r = mbedtls_net_connect(&cli->net, host, port, MBEDTLS_NET_PROTO_TCP)) != 0) {
-        _put_mbedtls_err(err, r, "mbedtls_net_connect()");
+        fprintf(stdout, "mbedtls_net_connect()");
         ret = r;
         goto done;
     }
 
     if ((r = _configure_cli(cli, debug, cert, cert_size, private_key, private_key_size, err)) != 0) {
         ret = r;
+	fprintf(stdout, "Can't configure cli");
         goto done;
     }
 
     if ((r = mbedtls_ssl_set_hostname(&cli->ssl, host)) != 0) {
-        _put_mbedtls_err(err, r, "mbedtls_ssl_set_hostname");
+        fprintf(stdout, "mbedtls_ssl_set_hostname");
         ret = r;
         goto done;
     }
@@ -318,7 +322,7 @@ int tlscli_connect(bool debug, const char* host, const char* port, void* cert, s
 
     while ((r = mbedtls_ssl_handshake(&cli->ssl)) != 0) {
         if (r != MBEDTLS_ERR_SSL_WANT_READ && r != MBEDTLS_ERR_SSL_WANT_WRITE) {
-            _put_mbedtls_err(err, r, "mbedtls_ssl_handshake");
+            fprintf(stdout, "mbedtls_ssl_handshake");
             ret = r;
             goto done;
         }
@@ -326,7 +330,7 @@ int tlscli_connect(bool debug, const char* host, const char* port, void* cert, s
 
     if (mbedtls_ssl_get_verify_result(&cli->ssl) != 0) {
         mbedtls_ssl_close_notify(&cli->ssl);
-        _put_err(err, "handshake failed");
+        fprintf(stdout, "handshake failed");
         goto done;
     }
 
