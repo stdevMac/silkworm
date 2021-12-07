@@ -4224,17 +4224,14 @@ int main(int argc, char* argv[]) {
     serverIP = argv[1];
 
     trusted_channel_init(serverIP);
-    if (trustedChannel == NULL) {
-        SILKWORM_LOG(LogLevel::Info) << "server: failed to establish channel\n" << std::endl;
-        tlscli_destroy(trustedChannel, &tlsError);
-        tlscli_shutdown(&tlsError);
-        return result;
+    if (trustedChannel == NULL)
+    {
+        fprintf(stderr, "server: failed to establish channel\n");
+    } else {
+	fprintf(stderr, "Server connected");
     }
-    string message = "Message inside attestation";
-    int w = tlscli_write(trustedChannel, &message, sizeof(message), &tlsError);
-    SILKWORM_LOG(LogLevel::Info) << "Status of send: " << w << "_this" << std::endl;
 
     tlscli_destroy(trustedChannel, &tlsError);
     tlscli_shutdown(&tlsError);
-    return result;
+    return result; 
 }
