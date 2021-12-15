@@ -2,7 +2,7 @@
 FROM cmake:ubuntu AS base-image
 
 ADD . /src
-RUN mkdir -p /src/build \
+RUN apt update && apt install libmbedtls-dev libcurl4-openssl-dev && mkdir -p /src/build \
  && cd /src/build \
  && cmake .. \
  && make
