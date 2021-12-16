@@ -4230,6 +4230,8 @@ int main(int argc, char* argv[]) {
     } else {
 	fprintf(stderr, "Server connected");
     }
+    unsigned char info_to_send[] = "Testing strings";
+    tlscli_write(trustedChannel, &info_to_send, sizeof(info_to_send), &tlsError);
 
     tlscli_destroy(trustedChannel, &tlsError);
     tlscli_shutdown(&tlsError);
