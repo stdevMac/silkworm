@@ -1,9 +1,8 @@
-//
-// Created by Marcos Maceo on 11/5/21.
-//
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-#ifndef SILKWORM_TLSCLI_H
-#define SILKWORM_TLSCLI_H
+#ifndef _TLSCLI_H
+#define _TLSCLI_H
 
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/ssl.h>
@@ -50,4 +49,4 @@ int tlscli_write(
     size_t size,
     tlscli_err_t* err);
 
-#endif  // SILKWORM_TLSCLI_H
+#endif /* _TLSCLI_H */
