@@ -3971,6 +3971,7 @@ int main(int argc, char* argv[]) {
             "7578a0deb7267655138718192a0b92a1f1a807c3ce11e78deb75ffb5d4cfa4fe886be988ca756fd7f97a6521c0"
             "c0"};
 
+        // Insert blocks in the State
         //        auto result{stagedsync::insert_blocks(txn, rlps)};
         //        if (result == silkworm::stagedsync::StageResult::kSuccess) {
         //            SILKWORM_LOG(LogLevel::Info) << "Inserted all blocks" << std::endl;
@@ -3978,26 +3979,34 @@ int main(int argc, char* argv[]) {
         //            SILKWORM_LOG(LogLevel::Info) << "Error inserting blocks" << std::endl;
         //        }
 
-        Bytes rlp_bytes{*from_hex(rlp_hex)};
-        ByteView in{rlp_bytes};
-        Block bb{};
-        Bytes rlp2{*from_hex(rlps[0])};
-        ByteView in2{rlp2};
-        Block b_trie{};
-        db::StateCacheDB stateCacheDb{};
-        stagedsync::insert_witness(stateCacheDb);
-        (void)rlp::decode(in, bb);
-        (void)rlp::decode(in2, b_trie);
-        bb.recover_senders();
-        assert(bb.header.number == b_trie.header.number + 1);
-        auto y{to_hex(b_trie.header.state_root)};
-        (void)y;
-        auto execution_result{stagedsync::execute_block(bb, stateCacheDb, db::h256{y})};
+        // Conversion of block to validate from rlp
+        Bytes bytes_block{*from_hex(rlp_hex)};
+        ByteView byte_view_of_block{bytes_block};
+        Block block_to_validate{};
+        (void)rlp::decode(byte_view_of_block, block_to_validate);
+        block_to_validate.recover_senders();
+
+        // Insert of the witness in the db
+        db::StateCacheDB cacheDb{};
+        stagedsync::insert_witness(cacheDb);
+
+        // Processing of father of the block to validate according to rlp list
+        Bytes father_bytes{*from_hex(rlps[0])};
+        ByteView father_byte_view{father_bytes};
+        Block father_block{};
+        (void)rlp::decode(father_byte_view, father_block);
+
+        // Validate that the first block of the rlp
+        assert(block_to_validate.header.number == father_block.header.number + 1);
+
+        // Execute validation of the results
+        auto father_root_hash{to_hex(father_block.header.state_root)};
+        auto execution_result{stagedsync::execute_block(block_to_validate, cacheDb, db::h256{father_root_hash})};
 
         if (execution_result == silkworm::stagedsync::StageResult::kSuccess) {
             SILKWORM_LOG(LogLevel::Info) << "The block process fine" << std::endl;
         } else {
-            SILKWORM_LOG(LogLevel::Error) << "Error processing block: " << bb.header.number << std::endl;
+            SILKWORM_LOG(LogLevel::Error) << "Error processing block: " << block_to_validate.header.number << std::endl;
         }
 
     } catch (const std::exception& ex) {
