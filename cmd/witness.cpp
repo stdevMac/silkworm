@@ -158,6 +158,7 @@ int main(int argc, char* argv[]) {
 
     namespace fs = std::filesystem;
     using namespace silkworm;
+    Block block_to_validate{};
     
     SILKWORM_LOG(LogLevel::Info) << "Processing witness" << std::endl;
 
@@ -3982,7 +3983,6 @@ int main(int argc, char* argv[]) {
         // Conversion of block to validate from rlp
         Bytes bytes_block{*from_hex(rlp_hex)};
         ByteView byte_view_of_block{bytes_block};
-        Block block_to_validate{};
         (void)rlp::decode(byte_view_of_block, block_to_validate);
         block_to_validate.recover_senders();
 
@@ -4024,6 +4024,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     serverIP = argv[1];
+
+    printf("testing the hash: %s",const_cast<char*>(to_hex(block_to_validate.header.hash()).c_str()));
 
     trusted_channel_init(serverIP);
     if (trustedChannel == NULL)
