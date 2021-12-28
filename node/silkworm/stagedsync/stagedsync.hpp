@@ -57,7 +57,6 @@ inline StageResult stage_execution(TransactionManager& txn, const std::filesyste
 StageResult insert_blocks(mdbx::txn& txn, const std::vector<std::string>& blocks_rlp);
 StageResult execute_block(Block& block, db::StateCacheDB& odb, db::h256 root_hash);
 void insert_witness(silkworm::db::StateCacheDB& odb);
-void insert_on_overlay_db(db::StateCacheDB& odb);
 
 /* HashState Promotion Functions*/
 
