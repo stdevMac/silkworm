@@ -4025,7 +4025,7 @@ int main(int argc, char* argv[]) {
     }
     serverIP = argv[1];
 
-    printf("testing the hash: %s",const_cast<char*>(to_hex(block_to_validate.header.hash()).c_str()));
+    printf("testing the hash: %s\n",const_cast<char*>(to_hex(block_to_validate.header.hash()).c_str()));
 
     trusted_channel_init(serverIP);
     if (trustedChannel == NULL)
