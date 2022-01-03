@@ -233,7 +233,7 @@ static int _configure_cli(tlscli_t* cli, bool debug, void* cert, size_t cert_siz
     if (debug) mbedtls_ssl_conf_dbg(&cli->conf, _mbedtls_dbg, stdout);
 
     mbedtls_ssl_conf_authmode(&cli->conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
-    mbedtls_ssl_conf_verify(&cli->conf, cfailed_cert_verify_callback, NULL);
+    mbedtls_ssl_conf_verify(&cli->conf, _cert_verify_callback, NULL);
 
     if ((r = mbedtls_ssl_conf_own_cert(&cli->conf, &cli->crt, &cli->pk)) != 0) {
         _put_mbedtls_err(err, r, "mbedtls_ssl_conf_own_cert");
